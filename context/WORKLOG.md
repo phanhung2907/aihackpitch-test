@@ -26,3 +26,9 @@
 - Added detailed scope, fraud semantics and proposed decisions, money/ledger invariants, seven checkpoints, test/CI/CD matrix, and mock/contract strategy for parallel frontend/backend work.
 - Added frontend/backend orientation READMEs; no runtime code or dependencies yet.
 - Next: owner review, then separate technical/system/flow design step with Mermaid and OpenAPI.
+
+## 2026-11-02 — Close planning decisions
+
+- Owner delegated remaining planning choices. Fixed frontend/backend stack, contract/mock tooling, auth/roles, fraud thresholds/location policy, reservations and review semantics in plan section 12.
+- Updated frontend/backend orientation notes and shared context. No runtime packages installed; implementation/technical design checkpoint remains pending.
+- Verified documentation links, decision consistency and whitespace; runtime tests are not applicable to this documentation change.

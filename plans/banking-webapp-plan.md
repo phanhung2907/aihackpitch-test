@@ -10,27 +10,27 @@ Phạm vi bàn giao đầu tiên là sản phẩm demo với tiền và dữ li�
 
 Mỗi bước: thực hiện phạm vi đã duyệt → kiểm tra → cập nhật context → commit → push → xác minh remote → báo cáo và DỪNG. Chủ repo duyệt mới chuyển bước. Cho phép làm song song frontend/backend trong cùng một mốc đã duyệt, không tự động vượt mốc.
 
-## 2. Yêu cầu đã xác nhận và các giả định cần duyệt
+## 2. Yêu cầu và quyết định đã chốt theo ủy quyền
 
-| Nội dung | Yêu cầu / đề xuất |
+| Nội dung | Quyết định |
 | --- | --- |
 | Backend | Python, FastAPI |
 | Database | PostgreSQL trong Docker, volume lưu dữ liệu |
 | Cấu trúc | `frontend/` và `backend/` |
 | Phát triển song song | Frontend chạy bằng mock đúng hợp đồng; đổi cấu hình để gọi API thật |
-| Tiền tệ | Đề xuất chỉ VND, số nguyên đồng, không dùng float; API truyền tiền dạng chuỗi chữ số |
+| Tiền tệ | Chỉ VND, số nguyên đồng, không dùng float; API truyền tiền dạng chuỗi chữ số |
 | Khách hàng và tài khoản | CRUD; đóng/lưu trữ thay vì xóa dữ liệu đã có giao dịch |
 | Giao dịch | Tạo và đọc; không sửa/xóa bút toán đã ghi sổ. Sửa sai bằng giao dịch đảo có liên kết và quyền hạn |
 | Số tiền lớn | Nghi ngờ nếu số tiền một giao dịch > 1.000.000.000 VND |
-| Khoảng cách | Yêu cầu là hai giao dịch gần nhất ở địa điểm quá xa; đề xuất khoảng cách > 500 km. Đây là ngưỡng chờ duyệt, không phải yêu cầu đã chốt |
+| Khoảng cách | Khoảng cách Haversine > 500 km giữa hai lệnh liên tiếp của cùng tài khoản; không thêm điều kiện thời gian cho luật này |
 | Tốc độ giao dịch lớn | Hai giao dịch, mỗi giao dịch > 500.000.000 VND, cùng tài khoản, cách nhau <= 30 giây |
-| Xử lý nghi ngờ | Đề xuất HOLD trước ghi sổ; người kiểm duyệt có thể duyệt hoặc từ chối, lưu lý do và audit |
-| Quyền | Đề xuất customer, teller, fraud_analyst, admin; chốt ma trận quyền ở bước 2 |
-| Frontend | Chọn framework, thư viện UI, công cụ mock và phiên bản tại bước 2; không chốt phụ thuộc trước khi kiểm tra tương thích |
-| Địa điểm | Demo nhận tọa độ hợp lệ kèm nguồn; dữ liệu client có thể giả mạo. Nguồn đáng tin và chính sách thiếu vị trí cần chốt |
-| Triển khai | Local Docker trước; môi trường staging/production và nhà cung cấp chờ xác định |
+| Xử lý nghi ngờ | HOLD trước ghi sổ; người kiểm duyệt có thể duyệt hoặc từ chối, lưu lý do và audit |
+| Quyền | customer, teller, fraud_analyst, admin; chính sách cụ thể tại mục 12 |
+| Frontend | React + TypeScript + Vite; Tailwind CSS + shadcn/ui; React Router; TanStack Query; MSW; chi tiết tại mục 12 |
+| Địa điểm | Nguồn vị trí demo có provenance; thiếu vị trí thì HOLD; tọa độ sai trả validation error; chi tiết tại mục 12 |
+| Triển khai | Docker Compose local là đích bàn giao MVP; chưa mua hay triển khai dịch vụ cloud |
 
-Nếu chủ repo muốn sửa/xóa trực tiếp giao dịch, phải thống nhất lại mô hình kế toán trước khi triển khai. Đề xuất chuyển tiền nội bộ để kiểm tra tính nguyên tử giữa hai tài khoản, nhưng có thể bỏ khỏi MVP nếu chỉ cần gửi/rút.
+Nếu chủ repo muốn sửa/xóa trực tiếp giao dịch, phải thống nhất lại mô hình kế toán trước khi triển khai. Chốt chuyển tiền nội bộ trong MVP để kiểm tra tính nguyên tử giữa hai tài khoản.
 
 ## 3. Phân rã chức năng
 
@@ -51,22 +51,22 @@ Nếu chủ repo muốn sửa/xóa trực tiếp giao dịch, phải thống nh�
 - Số tiền dương; từ chối số âm, 0, sai định dạng, vượt giới hạn lưu trữ và chuyển cho chính tài khoản.
 - Idempotency cho yêu cầu thay đổi tiền: retry cùng key và cùng payload trả lại kết quả cũ; khác payload báo conflict.
 - Lịch sử có lọc thời gian, loại, trạng thái, tài khoản và phân trang; chi tiết hiển thị kết quả phát hiện gian lận theo quyền.
-- Trạng thái đề xuất: pending_review, posted, rejected, reversed. Luồng chuyển trạng thái và mã lỗi chốt ở hợp đồng.
+- Trạng thái chốt: pending_review, posted, rejected, reversed. Luồng chuyển trạng thái và mã lỗi chốt ở hợp đồng.
 - Duyệt một lệnh đang hold phải kiểm tra lại số dư, trạng thái tài khoản và quyền tại lúc ghi sổ. Không ghi sổ hai lần.
 
 ### 3.4 Phát hiện và xử lý gian lận
 
-| Rule ID | Điều kiện đề xuất | Test biên bắt buộc |
+| Rule ID | Điều kiện chốt | Test biên bắt buộc |
 | --- | --- | --- |
 | HIGH_AMOUNT | amount > 1.000.000.000 | đúng 1 tỷ không match, 1 tỷ + 1 match |
 | DISTANT_LOCATIONS | Khoảng cách hai giao dịch liên tiếp cùng tài khoản > ngưỡng km | dưới/bằng/trên ngưỡng; cùng vị trí; thiếu vị trí; tọa độ sai |
 | RAPID_LARGE_TRANSACTIONS | Có giao dịch trước > 500 triệu và lệnh hiện tại > 500 triệu trong cửa sổ 30 giây | đúng 500 triệu không match; 500 triệu + 1; 29,999s/30s/30,001s |
 
-Ngữ nghĩa đề xuất để duyệt: dùng thời gian nhận tại server UTC, cửa sổ đóng [t-30s, t]; so với các lệnh hợp lệ đã được chấp nhận trước đó (posted hoặc pending_review), loại lệnh rejected, validation failure và retry trùng key. Luật khoảng cách so với lệnh hợp lệ liền trước theo thứ tự xử lý được serialize; luật tốc độ tìm mọi lệnh lớn phù hợp trong cửa sổ, không chỉ giao dịch liền trước. Một lệnh có thể match nhiều luật, không nhân đôi bút toán.
+Ngữ nghĩa chốt: dùng thời gian nhận tại server UTC, cửa sổ đóng [t-30s, t]; so với các lệnh hợp lệ đã được chấp nhận trước đó (posted hoặc pending_review), loại lệnh rejected, validation failure và retry trùng key. Luật khoảng cách so với lệnh hợp lệ liền trước theo thứ tự xử lý được serialize; luật tốc độ tìm mọi lệnh lớn phù hợp trong cửa sổ, không chỉ giao dịch liền trước. Một lệnh có thể match nhiều luật, không nhân đôi bút toán.
 
-Chuyển tiền đánh giá tài khoản nguồn là bên khởi tạo; khoản credit nhận tiền không được tính như một thao tác có mặt tại địa điểm của người nhận. Thiết kế sẽ quyết định cách áp dụng quy tắc cho gửi/rút của giao dịch viên. Khi thiếu vị trí, không tự coi khoảng cách là 0 hoặc coi kiểm tra đã đạt; đề xuất hold với lý do riêng LOCATION_UNAVAILABLE. Trình bày khả năng false positive và cho phép cấu hình ngưỡng có phiên bản/audit.
+Chuyển tiền đánh giá tài khoản nguồn là bên khởi tạo; khoản credit nhận tiền không được tính như một thao tác có mặt tại địa điểm của người nhận. Gửi/rút tại quầy dùng vị trí chi nhánh do server tra cứu từ giao dịch viên; quy tắc áp dụng trên tài khoản khách hàng. Khi thiếu vị trí, không tự coi khoảng cách là 0 hoặc coi kiểm tra đã đạt; hold với lý do riêng LOCATION_UNAVAILABLE. Trình bày khả năng false positive và cho phép cấu hình ngưỡng có phiên bản/audit.
 
-Màn hình kiểm duyệt: danh sách cảnh báo, rule khớp và bằng chứng (amount, timestamps, distance), giao dịch liên quan, duyệt/từ chối có lý do, lọc trạng thái và người xử lý. Người tạo lệnh không tự duyệt lệnh của mình theo đề xuất phân tách nhiệm vụ.
+Màn hình kiểm duyệt: danh sách cảnh báo, rule khớp và bằng chứng (amount, timestamps, distance), giao dịch liên quan, duyệt/từ chối có lý do, lọc trạng thái và người xử lý. Người tạo lệnh không tự duyệt lệnh của mình theo chính sách phân tách nhiệm vụ.
 
 ## 4. Các bất biến bắt buộc
 
@@ -74,7 +74,7 @@ Màn hình kiểm duyệt: danh sách cảnh báo, rule khớp và bằng chứn
 2. Không overdraft do hai lệnh rút đồng thời. Khóa và transaction DB bảo vệ kiểm tra số dư lẫn ghi sổ.
 3. Chuyển nội bộ hoặc hoàn tất cả hai phía hoặc không thay đổi phía nào; tổng debit/credit cân bằng theo mô hình ledger được duyệt.
 4. Các lệnh cùng tài khoản được đánh giá gian lận nhất quán khi đến đồng thời; thứ tự khóa tránh deadlock cho chuyển khoản.
-5. HOLD không làm tăng/giảm số dư đã ghi sổ; cách reserve số dư khả dụng phải được chốt, kiểm thử và hiển thị rõ.
+5. HOLD không làm tăng/giảm số dư đã ghi sổ; reserve theo mục 12, phải kiểm thử và hiển thị rõ.
 6. Ghi giao dịch, quyết định rule và audit trong cùng ranh giới nhất quán; lỗi engine không được âm thầm cho qua.
 7. Lịch sử bút toán và quyết định không bị xóa để che dấu sai sót; hành động nhạy cảm có actor, thời gian, correlation ID.
 8. Không lộ dữ liệu tài khoản khác do đoán ID; lọc quyền ở API, không chỉ ẩn nút frontend.
@@ -100,7 +100,7 @@ Bước 2 tạo `contracts/openapi.yaml` làm nguồn chuẩn duy nhất, có sc
 
 Nhóm API dự kiến: auth/session, customers, accounts, deposits, withdrawals, transfers, transactions, fraud alerts, review decisions. Tên đường dẫn, HTTP codes và payload chính thức thuộc bước thiết kế, chưa được định nghĩa bởi danh sách này.
 
-Frontend sinh types từ OpenAPI và dùng HTTP mock adapter (công cụ cụ thể chọn ở bước 2). Components gọi một API client duy nhất; không chứa điều kiện mock trong UI. Mock ở tầng HTTP, có store có trạng thái và fixtures giả lập, mô phỏng success, validation, unauthorized, forbidden, not-found, insufficient-funds, conflict, hold, timeout. Không gọi backend để chạy chế độ mock.
+Frontend sinh types bằng openapi-typescript, gọi qua openapi-fetch và dùng MSW làm HTTP mock adapter. Components gọi một API client duy nhất; không chứa điều kiện mock trong UI. Mock ở tầng HTTP, có store có trạng thái và fixtures giả lập, mô phỏng success, validation, unauthorized, forbidden, not-found, insufficient-funds, conflict, hold, timeout. Không gọi backend để chạy chế độ mock.
 
 Backend triển khai đúng schemas/semantics và kiểm tra schema responses với contract. CI so sánh OpenAPI do FastAPI cung cấp với contract canonical theo phương pháp được chốt, phát hiện thay đổi không tương thích. Không duy trì hai bản contract thủ công không được so sánh.
 
@@ -157,7 +157,7 @@ Frontend lane chỉ sở hữu `frontend/`; backend lane sở hữu `backend/`; 
 
 CI bước 3 trở đi chạy trên push/PR: frontend lint/type/test/build; backend lint/type/pytest; integration với Postgres service; validate contract và generated artifacts; checks trên paths liên quan nhưng các thay đổi contract phải trigger cả hai. Tool/commands chính xác được thêm cùng bootstrap, không giả định đã có npm/pytest scripts trong repo hiện tại.
 
-Theo ECC: TDD cho thay đổi hành vi; self-review diff; sửa lỗi do thay đổi; báo kết quả thực tế. Đề xuất coverage >= 80% cho module core nghiệp vụ, bổ sung case ledger/concurrency bắt buộc; coverage cao không thay thế kiểm thử bất biến. Chốt và cấu hình threshold ở bước 3.
+Theo ECC: TDD cho thay đổi hành vi; self-review diff; sửa lỗi do thay đổi; báo kết quả thực tế. Chốt coverage >= 80% cho module core nghiệp vụ, bổ sung case ledger/concurrency bắt buộc; coverage cao không thay thế kiểm thử bất biến. Cấu hình threshold ở bước 3.
 
 CD chưa tự động production. Khi có môi trường được duyệt: build artifact có version, deploy staging, migrate có kiểm soát, smoke test, approve release và có rollback tương thích schema. Phân biệt local PASS, hosted CI PASS và target verification; không ghi success cho bước chưa chạy.
 
@@ -170,13 +170,86 @@ CD chưa tự động production. Khi có môi trường được duyệt: build
 - Context giữa agents: đọc context và commit thực tế; ownership/worktrees; cập nhật handoff từng checkpoint.
 - Quy trình bị chạy quá bước: yêu cầu approval explicit trong AGENTS và handoff; mỗi bước có commit riêng.
 
-## 11. Checklist để chủ repo duyệt kế hoạch
+## 11. Checkpoint chủ repo kiểm tra
 
-- [ ] Đồng ý phạm vi demo, customer/account CRUD, gửi/rút và đề xuất chuyển nội bộ.
-- [ ] Đồng ý bất biến tiền/ledger và đảo giao dịch thay sửa/xóa bút toán.
-- [ ] Chốt khoảng cách (đề xuất > 500 km), lịch sử lệnh và cách xử lý thiếu vị trí.
-- [ ] Đồng ý > 1 tỷ; mỗi lệnh > 500 triệu trong <= 30 giây, dùng thời gian server.
-- [ ] Chốt HOLD/review, vai trò và cách giữ số dư khả dụng ở bước thiết kế.
-- [ ] Đồng ý roadmap 7 bước, contract-first/mocks và checkpoint sau mỗi bước.
+- [x] Chốt demo, customer/account CRUD, gửi/rút/chuyển nội bộ theo ủy quyền.
+- [x] Chốt ledger bất biến và đảo giao dịch thay sửa/xóa bút toán.
+- [x] Chốt > 500 km, lịch sử lệnh và thiếu vị trí theo mục 12.
+- [x] Chốt > 1 tỷ; mỗi lệnh > 500 triệu trong <= 30 giây, thời gian server.
+- [x] Chốt HOLD/review, vai trò và reservation theo mục 12.
+- [ ] Chủ repo kiểm tra bản kế hoạch đã chốt trước khi bắt đầu bước thiết kế.
 
-Chủ repo có thể duyệt kế hoạch kèm chỉnh các đề xuất. Sau duyệt bước 1, bước 2 sẽ biến các lựa chọn đã thống nhất thành thiết kế và hợp đồng có thể kiểm chứng.
+Các lựa chọn được chốt theo ủy quyền trong chat; chưa coi đây là phê duyệt bắt đầu bước 2. Sau khi chủ repo cho tiếp tục, bước 2 chuyển chúng thành thiết kế và hợp đồng có thể kiểm chứng.
+
+
+## 12. Tech stack và nghiệp vụ đã chốt
+
+Các quyết định dưới đây thay các lựa chọn còn mở của bản kế hoạch đầu tiên. Đây là quyết định cho MVP theo yêu cầu chủ repo tự chốt; không phải tuyên bố đã triển khai hay đã kiểm thử tương thích dependencies.
+
+### Frontend
+
+| Hạng mục | Lựa chọn | Mục đích |
+| --- | --- | --- |
+| Kiến trúc | React SPA, TypeScript strict, Vite | Dashboard có đăng nhập, deploy static qua reverse proxy, backend độc lập |
+| Runtime/package manager | Node.js 24 LTS, npm, package-lock.json | Một toolchain frontend; CI dùng npm ci |
+| Routing | React Router, declarative routing | Trang nghiệp vụ và route guards; server vẫn kiểm tra quyền |
+| UI | Tailwind CSS + shadcn/ui, Lucide icons | Design tokens, forms/dialog/table thống nhất, component source nằm trong repo |
+| Dữ liệu server | TanStack Query | Cache, pagination, loading/error, invalidate sau mutation |
+| State khác | React state/context; filter trong URL | Không thêm global store khi chưa cần; số dư chỉ lấy từ API |
+| Forms | React Hook Form + Zod | Validation UX; backend vẫn là nguồn kiểm tra cuối |
+| Hợp đồng | OpenAPI 3.1 + openapi-typescript + openapi-fetch | Sinh types/client từ cùng artifact; không viết tay payload trùng lặp |
+| Mock | MSW browser và Node | Cùng HTTP handlers/scenarios cho dev và tests; store demo reset được |
+| Unit/component | Vitest + React Testing Library + jsdom | Hành vi người dùng, lỗi và form states |
+| E2E | Playwright Chromium + axe-core | Journeys tài chính và kiểm tra accessibility thiết yếu |
+| Chất lượng | ESLint, Prettier, tsc strict | CI lint/type/test/build |
+
+Giao diện tiếng Việt, hiển thị VND bằng Intl.NumberFormat và thời gian Asia/Ho_Chi_Minh; API UTC. Form giữ tiền dạng chuỗi, không chuyển qua Number để tính toán tiền; hiển thị dùng BigInt khi cần. Không optimistic-update số dư hay tự retry mutation tiền: retry người dùng phải giữ cùng idempotency key. Không lưu token trong localStorage. Tự động vô hiệu hóa MSW trong build release; CI chứng minh app thật không bị mock intercept.
+
+Chọn SPA vì MVP gồm các màn hình nghiệp vụ có đăng nhập và một backend FastAPI riêng. Không có nhu cầu SEO/SSR trong phạm vi này. Dashboard tập trung bảng dữ liệu, số dư, trạng thái và bằng chứng gian lận; biểu đồ chỉ bổ sung khi có yêu cầu cụ thể.
+
+### Backend và hạ tầng
+
+Python 3.13; FastAPI + Pydantic 2; SQLAlchemy 2 synchronous + psycopg 3; Alembic migrations; PostgreSQL 17 Docker; uv và uv.lock để khóa Python dependencies. FastAPI handlers truy cập DB dùng def với transaction/session theo request; không chạy synchronous DB I/O trong async handler. Kiến trúc modular monolith, rule engine đồng bộ trong ranh giới transaction; MVP không cần Redis, Celery, Kafka hoặc microservices.
+
+pytest + pytest-cov + HTTPX cho tests; Ruff lint/format; mypy cho type checks; PostgreSQL thật cho integration. Docker Compose chạy Postgres, backend và frontend static qua Nginx. Cùng origin `/api` qua proxy (Vite proxy khi dev, Nginx khi compose) để đơn giản session/CSRF. Database không public trong bản compose đầy đủ; volume riêng. Health/readiness tách biệt. GitHub Actions chạy CI; Docker Compose local là đích bàn giao, chưa bật CD cloud.
+
+Chốt họ công nghệ/runtime; exact patch của packages và Docker digest được resolve một lần ở bootstrap, kiểm tra peer dependencies và security advisories rồi commit lockfiles. Không dùng canary/beta hoặc Docker latest; việc khóa patch là kiểm chứng cài đặt, không mở lại quyết định stack. Tài liệu bước 2 phải ghi version matrix; nếu có incompatibility thực tế, báo trước khi đổi stack.
+
+### Auth và quyền
+
+Session opaque do server tạo, lưu hash trong Postgres; cookie HttpOnly, SameSite=Lax, Secure khi HTTPS, hết hạn tuyệt đối 8 giờ, rotate khi login, revoke khi logout. Password hash Argon2id. Mutation cần CSRF token gắn session và kiểm tra Origin. Bản local HTTP chỉ dùng cookie không Secure trong chế độ development explicit. Không tự đăng ký tài khoản public; seed users giả cho demo. Đăng nhập giới hạn thử bằng DB-backed policy được cụ thể hóa ở thiết kế.
+
+- customer: xem tài khoản/lịch sử của mình và tạo chuyển tiền nội bộ từ tài khoản mình; không tự gửi tiền giả hoặc tự duyệt cảnh báo.
+- teller: CRUD khách hàng/tài khoản, gửi/rút tại chi nhánh được gán, xem dữ liệu nghiệp vụ cần thiết; không duyệt fraud hay đổi luật.
+- fraud_analyst: xem cảnh báo/evidence và approve/reject; không tạo giao dịch tiền hay tự sửa số dư.
+- admin: quản lý users, vai trò, chi nhánh và cấu hình rule; không mặc nhiên có quyền tạo/duyệt giao dịch. Mỗi user một role trong MVP.
+
+Chặn tự duyệt bằng actor ID tại backend; quyền tối thiểu áp dụng cả API và truy vấn ownership. Seed ít nhất một user mỗi role và hai customer, với dữ liệu giả rõ ràng.
+
+### Tiền, HOLD và quyết định fraud
+
+- VND nguyên đồng; API digit string; PostgreSQL BIGINT với validation trần theo loại dữ liệu, phép cộng được kiểm tra overflow. Ledger double-entry, tài khoản clearing hệ thống cho gửi/rút; bút toán posted không sửa/xóa. Chuyển nội bộ có trong MVP.
+- Giao dịch rút/chuyển hợp lệ phải đủ available balance trước khi đánh giá. Nếu HOLD, reserve đúng amount trên tài khoản nguồn; available = posted balance - active reservations. Deposit HOLD không credit/reserve, chỉ chờ duyệt. Approve tiêu thụ reservation và post nguyên tử; reject giải phóng reservation. Không tự hết hạn trong MVP; danh sách review hiển thị tuổi lệnh và thời gian giữ tiền.
+- Analyst approve là override có lý do dựa trên snapshot evidence, không chạy lại rule để tự hold vô hạn. Vẫn kiểm tra account đang active, reservation, quyền và ledger. Nếu điều kiện ghi sổ không đạt, trả conflict, giữ pending và không mất reservation; analyst có thể reject để giải phóng.
+- DISTANT_LOCATIONS dùng Haversine > 500 km, không xét thời gian vì yêu cầu là khoảng cách giữa hai giao dịch gần nhất. Lệnh hợp lệ đầu tiên có vị trí không match luật này. Gửi/rút dùng tọa độ chi nhánh từ server; chuyển dùng vị trí mô phỏng gửi từ UI với source=demo_client, được hiển thị rõ chưa xác minh.
+- Thiếu tọa độ: HOLD LOCATION_UNAVAILABLE. Tọa độ ngoài phạm vi/không hữu hạn hoặc chỉ có một thành phần: validation error, không đưa vào candidate history. Nếu lệnh trước thiếu vị trí thì cũng HOLD do không đánh giá được cặp; không coi là 0 km.
+- HIGH_AMOUNT > 1 tỷ; RAPID_LARGE_TRANSACTIONS mỗi lệnh > 500 triệu trong <= 30s. Thời gian received_at do server đóng dấu, ordering riêng được gán trong lock tài khoản để serialize. Không chấp nhận timestamp client làm căn cứ. Đồng thời/đảo thứ tự nhận và xử lý phải có test ở bước thiết kế/implementation.
+- Lịch sử xét luật: lệnh accepted hợp lệ, kể cả pending; loại rejected ở thời điểm đánh giá, retry và reversal hệ thống. Không thay đổi kết quả fraud lịch sử khi analyst quyết định sau đó; lưu rule version và evidence. Reversal có quyền teller yêu cầu, analyst duyệt riêng, không đảo lần hai; nếu bên bị debit không đủ available balance thì từ chối reversal, không cho âm.
+- Rule engine lỗi: rollback và trả lỗi dịch vụ; không post, không tạo reserve dở dang. Request retry cùng key an toàn. Một lệnh nhiều rule tạo một quyết định HOLD với danh sách lý do và evidence.
+
+### Contract và tiêu chí hoàn tất
+
+Canonical `contracts/openapi.yaml`; validate bằng Redocly CLI, types sinh bằng openapi-typescript, responses và examples validate theo schema trong tests backend. So sánh FastAPI OpenAPI theo operation/method/path/schema đã normalize, bỏ metadata không mang nghĩa; CI phải bắt field/enum/status drift. Spec tạo ở bước 2, không có artifact schema giả ở bước chốt kế hoạch.
+
+Core money/fraud modules đạt line và branch coverage >= 80%, cộng toàn bộ invariant/concurrency scenarios bắt buộc. Mock store chỉ mô phỏng quan sát bên ngoài; backend integration tests mới chứng minh locking/ledger thật. Bước song song chỉ bắt đầu khi contract/examples được duyệt, fixtures seed chung và code generation đã chạy được.
+
+### Tài liệu chính thức đã tham khảo
+
+- [Vite](https://vite.dev/guide/): dev server và build tool cho frontend.
+- [React Router](https://reactrouter.com/start/declarative/installation): declarative routing.
+- [shadcn/ui](https://ui.shadcn.com/docs): UI components có source để tùy chỉnh.
+- [TanStack Query](https://tanstack.com/query/latest/docs/framework/react/overview): server-state fetching/cache.
+- [MSW](https://mswjs.io/docs/): mock ở tầng HTTP cho browser và Node.
+- [openapi-typescript](https://openapi-ts.dev/introduction): sinh TypeScript từ OpenAPI 3.1.
+
+Các lựa chọn kiến trúc/nghiệp vụ là quyết định của dự án; tài liệu thư viện chứng minh khả năng của công cụ, không thay thế kiểm thử tương thích stack khi bootstrap.

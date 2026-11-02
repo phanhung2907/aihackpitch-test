@@ -6,7 +6,7 @@ Updated: 2026-11-02 (Asia/Bangkok).
 
 Step 1 is complete: [detailed banking product plan](../plans/banking-webapp-plan.md). Separate frontend/backend folders contain orientation READMEs only. No application or system design has been implemented yet.
 
-The plan specifies seven review checkpoints, API-contract-first development, contract-valid HTTP mocks, parallel frontend/backend lanes, fraud rule boundaries, ledger invariants and CI/CD acceptance gates. Proposed distance threshold, HOLD policy, roles, transfers and location handling remain subject to owner approval.
+The plan specifies seven review checkpoints, API-contract-first development, contract-valid HTTP mocks, parallel frontend/backend lanes, fraud rule boundaries, ledger invariants and CI/CD acceptance gates. Owner delegated remaining decisions: section 12 now fixes frontend/backend stack, roles/session, >500 km distance, HOLD/reservations, location policy and internal transfers. These are project decisions; exact package patches are locked and verified at bootstrap.
 
 ## Verification
 
