@@ -1,0 +1,4534 @@
+openapi: 3.1.0
+info:
+  title: Banking Demo API
+  version: 0.1.0-design
+  description: Canonical contract, design checkpoint; no running API yet. Ownership and business semantics in backend/design.
+    Money is digit-string VND; UTC timestamps. All authenticated mutations require exact Origin and session-bound X-CSRF-Token.
+    Role list does not override resource ownership.
+servers:
+- url: http://localhost:8080
+  description: Local full-stack demo; /api/v1 is included in paths.
+paths:
+  /api/v1/auth/login:
+    post:
+      operationId: login
+      summary: login
+      tags:
+      - auth
+      x-roles: []
+      security: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Session'
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: bank_session opaque; HttpOnly; SameSite=Lax; Secure ngoài local development; token không nằm trong
+                JSON.
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+  /api/v1/auth/session:
+    get:
+      operationId: getSession
+      summary: getSession
+      tags:
+      - auth
+      x-roles: &id001
+      - customer
+      - teller
+      - fraud_analyst
+      - admin
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Session'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: logout
+      summary: logout
+      tags:
+      - auth
+      x-roles: *id001
+      security:
+      - sessionCookie: []
+      responses:
+        '204':
+          description: Thành công, không có body.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: Xóa bank_session sau khi revoke server session.
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+  /api/v1/customers:
+    get:
+      operationId: listCustomers
+      summary: listCustomers
+      tags:
+      - customers
+      x-roles:
+      - teller
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Customer'
+                  meta:
+                    type: object
+                    additionalProperties: false
+                    required:
+                    - next_cursor
+                    - limit
+                    properties:
+                      next_cursor:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                      limit:
+                        type: integer
+                        minimum: 1
+                        maximum: 100
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: search
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - active
+          - archived
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+    post:
+      operationId: createCustomer
+      summary: createCustomer
+      tags:
+      - customers
+      x-roles:
+      - teller
+      security:
+      - sessionCookie: []
+      responses:
+        '201':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Customer'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL resource vừa tạo.
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerCreate'
+  /api/v1/customers/{customer_id}:
+    get:
+      operationId: getCustomer
+      summary: getCustomer
+      tags:
+      - customers
+      x-roles:
+      - customer
+      - teller
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Customer'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: customer_id
+        in: path
+        required: true
+        schema: &id002
+          type: string
+          format: uuid
+    patch:
+      operationId: updateCustomer
+      summary: updateCustomer
+      tags:
+      - customers
+      x-roles:
+      - teller
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Customer'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: customer_id
+        in: path
+        required: true
+        schema: *id002
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerPatch'
+    delete:
+      operationId: archiveCustomer
+      summary: archiveCustomer
+      tags:
+      - customers
+      x-roles:
+      - teller
+      security:
+      - sessionCookie: []
+      responses:
+        '204':
+          description: Thành công, không có body.
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: customer_id
+        in: path
+        required: true
+        schema: *id002
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+  /api/v1/accounts:
+    get:
+      operationId: listAccounts
+      summary: listAccounts
+      tags:
+      - accounts
+      x-roles:
+      - customer
+      - teller
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Account'
+                  meta:
+                    type: object
+                    additionalProperties: false
+                    required:
+                    - next_cursor
+                    - limit
+                    properties:
+                      next_cursor:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                      limit:
+                        type: integer
+                        minimum: 1
+                        maximum: 100
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: customer_id
+        in: query
+        required: false
+        schema: *id002
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - active
+          - frozen
+          - closed
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+    post:
+      operationId: createAccount
+      summary: createAccount
+      tags:
+      - accounts
+      x-roles:
+      - teller
+      security:
+      - sessionCookie: []
+      responses:
+        '201':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Account'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL resource vừa tạo.
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountCreate'
+  /api/v1/accounts/recipient-lookup:
+    get:
+      operationId: lookupRecipient
+      summary: lookupRecipient
+      tags:
+      - accounts
+      x-roles:
+      - customer
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Recipient'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: account_number
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 30
+  /api/v1/accounts/{account_id}:
+    get:
+      operationId: getAccount
+      summary: getAccount
+      tags:
+      - accounts
+      x-roles:
+      - customer
+      - teller
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Account'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: account_id
+        in: path
+        required: true
+        schema: *id002
+    patch:
+      operationId: updateAccount
+      summary: updateAccount
+      tags:
+      - accounts
+      x-roles:
+      - teller
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Account'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: account_id
+        in: path
+        required: true
+        schema: *id002
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountPatch'
+  /api/v1/accounts/{account_id}/state-changes:
+    post:
+      operationId: changeAccountState
+      summary: changeAccountState
+      tags:
+      - accounts
+      x-roles:
+      - teller
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Account'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: account_id
+        in: path
+        required: true
+        schema: *id002
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountStateChange'
+  /api/v1/deposits:
+    post:
+      operationId: createDeposit
+      summary: createDeposit
+      tags:
+      - deposits
+      x-roles:
+      - teller
+      security:
+      - sessionCookie: []
+      responses:
+        '201':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Transaction'
+          headers:
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+              description: true khi trả lại resource hiện có; không xử lý tiền lần nữa.
+            Location:
+              schema:
+                type: string
+              description: URL resource vừa tạo.
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashRequest'
+      description: Idempotency scoped theo actor+key; cùng key khác method/path/body trả 409. Replay trả resource hiện tại
+        sau kiểm tra quyền; không tạo command, reserve hoặc journal mới.
+  /api/v1/withdrawals:
+    post:
+      operationId: createWithdrawal
+      summary: createWithdrawal
+      tags:
+      - withdrawals
+      x-roles:
+      - teller
+      security:
+      - sessionCookie: []
+      responses:
+        '201':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Transaction'
+          headers:
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+              description: true khi trả lại resource hiện có; không xử lý tiền lần nữa.
+            Location:
+              schema:
+                type: string
+              description: URL resource vừa tạo.
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashRequest'
+      description: Idempotency scoped theo actor+key; cùng key khác method/path/body trả 409. Replay trả resource hiện tại
+        sau kiểm tra quyền; không tạo command, reserve hoặc journal mới.
+  /api/v1/transfers:
+    post:
+      operationId: createTransfer
+      summary: createTransfer
+      tags:
+      - transfers
+      x-roles:
+      - customer
+      security:
+      - sessionCookie: []
+      responses:
+        '201':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Transaction'
+          headers:
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+              description: true khi trả lại resource hiện có; không xử lý tiền lần nữa.
+            Location:
+              schema:
+                type: string
+              description: URL resource vừa tạo.
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+      description: Idempotency scoped theo actor+key; cùng key khác method/path/body trả 409. Replay trả resource hiện tại
+        sau kiểm tra quyền; không tạo command, reserve hoặc journal mới.
+  /api/v1/transactions:
+    get:
+      operationId: listTransactions
+      summary: listTransactions
+      tags:
+      - transactions
+      x-roles:
+      - customer
+      - teller
+      - fraud_analyst
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+                  meta:
+                    type: object
+                    additionalProperties: false
+                    required:
+                    - next_cursor
+                    - limit
+                    properties:
+                      next_cursor:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                      limit:
+                        type: integer
+                        minimum: 1
+                        maximum: 100
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: account_id
+        in: query
+        required: false
+        schema: *id002
+      - name: type
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - deposit
+          - withdrawal
+          - transfer
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - pending_review
+          - posted
+          - rejected
+          - reversed
+      - name: from
+        in: query
+        required: false
+        schema: &id003
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        schema: *id003
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+  /api/v1/transactions/{transaction_id}:
+    get:
+      operationId: getTransaction
+      summary: getTransaction
+      tags:
+      - transactions
+      x-roles:
+      - customer
+      - teller
+      - fraud_analyst
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Transaction'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: transaction_id
+        in: path
+        required: true
+        schema: *id002
+  /api/v1/transactions/{transaction_id}/review-decisions:
+    post:
+      operationId: reviewTransaction
+      summary: reviewTransaction
+      tags:
+      - transactions
+      x-roles:
+      - fraud_analyst
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Transaction'
+          headers:
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+              description: true khi trả lại resource hiện có; không xử lý tiền lần nữa.
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: transaction_id
+        in: path
+        required: true
+        schema: *id002
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewDecision'
+      description: Idempotency scoped theo actor+key; cùng key khác method/path/body trả 409. Replay trả resource hiện tại
+        sau kiểm tra quyền; không tạo command, reserve hoặc journal mới.
+  /api/v1/fraud-alerts:
+    get:
+      operationId: listFraudAlerts
+      summary: listFraudAlerts
+      tags:
+      - fraud-alerts
+      x-roles:
+      - fraud_analyst
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FraudAlert'
+                  meta:
+                    type: object
+                    additionalProperties: false
+                    required:
+                    - next_cursor
+                    - limit
+                    properties:
+                      next_cursor:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                      limit:
+                        type: integer
+                        minimum: 1
+                        maximum: 100
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - open
+          - approved
+          - rejected
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+  /api/v1/fraud-alerts/{alert_id}:
+    get:
+      operationId: getFraudAlert
+      summary: getFraudAlert
+      tags:
+      - fraud-alerts
+      x-roles:
+      - fraud_analyst
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FraudAlert'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: alert_id
+        in: path
+        required: true
+        schema: *id002
+  /api/v1/transactions/{transaction_id}/reversal-requests:
+    post:
+      operationId: requestReversal
+      summary: requestReversal
+      tags:
+      - transactions
+      x-roles:
+      - teller
+      security:
+      - sessionCookie: []
+      responses:
+        '201':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ReversalRequest'
+          headers:
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+              description: true khi trả lại resource hiện có; không xử lý tiền lần nữa.
+            Location:
+              schema:
+                type: string
+              description: URL resource vừa tạo.
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: transaction_id
+        in: path
+        required: true
+        schema: *id002
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReversalCreate'
+      description: Idempotency scoped theo actor+key; cùng key khác method/path/body trả 409. Replay trả resource hiện tại
+        sau kiểm tra quyền; không tạo command, reserve hoặc journal mới.
+  /api/v1/reversal-requests:
+    get:
+      operationId: listReversalRequests
+      summary: listReversalRequests
+      tags:
+      - reversal-requests
+      x-roles:
+      - teller
+      - fraud_analyst
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReversalRequest'
+                  meta:
+                    type: object
+                    additionalProperties: false
+                    required:
+                    - next_cursor
+                    - limit
+                    properties:
+                      next_cursor:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                      limit:
+                        type: integer
+                        minimum: 1
+                        maximum: 100
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - pending_review
+          - posted
+          - rejected
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+  /api/v1/reversal-requests/{reversal_id}/review-decisions:
+    post:
+      operationId: reviewReversal
+      summary: reviewReversal
+      tags:
+      - reversal-requests
+      x-roles:
+      - fraud_analyst
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ReversalRequest'
+          headers:
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+              description: true khi trả lại resource hiện có; không xử lý tiền lần nữa.
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: reversal_id
+        in: path
+        required: true
+        schema: *id002
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewDecision'
+      description: Idempotency scoped theo actor+key; cùng key khác method/path/body trả 409. Replay trả resource hiện tại
+        sau kiểm tra quyền; không tạo command, reserve hoặc journal mới.
+  /api/v1/dashboard:
+    get:
+      operationId: getDashboard
+      summary: getDashboard
+      tags:
+      - dashboard
+      x-roles: *id001
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Dashboard'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/audit-logs:
+    get:
+      operationId: listAuditLogs
+      summary: listAuditLogs
+      tags:
+      - audit-logs
+      x-roles:
+      - admin
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  meta:
+                    type: object
+                    additionalProperties: false
+                    required:
+                    - next_cursor
+                    - limit
+                    properties:
+                      next_cursor:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                      limit:
+                        type: integer
+                        minimum: 1
+                        maximum: 100
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: resource_id
+        in: query
+        required: false
+        schema: *id002
+      - name: resource_type
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+  /api/v1/users:
+    get:
+      operationId: listUsers
+      summary: listUsers
+      tags:
+      - users
+      x-roles:
+      - admin
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  meta:
+                    type: object
+                    additionalProperties: false
+                    required:
+                    - next_cursor
+                    - limit
+                    properties:
+                      next_cursor:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                      limit:
+                        type: integer
+                        minimum: 1
+                        maximum: 100
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+    post:
+      operationId: createUser
+      summary: createUser
+      tags:
+      - users
+      x-roles:
+      - admin
+      security:
+      - sessionCookie: []
+      responses:
+        '201':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL resource vừa tạo.
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+  /api/v1/users/{user_id}:
+    get:
+      operationId: getUser
+      summary: getUser
+      tags:
+      - users
+      x-roles:
+      - admin
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/branches:
+    get:
+      operationId: listBranchs
+      summary: listBranchs
+      tags:
+      - branches
+      x-roles:
+      - admin
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Branch'
+                  meta:
+                    type: object
+                    additionalProperties: false
+                    required:
+                    - next_cursor
+                    - limit
+                    properties:
+                      next_cursor:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                      limit:
+                        type: integer
+                        minimum: 1
+                        maximum: 100
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+    post:
+      operationId: createBranch
+      summary: createBranch
+      tags:
+      - branches
+      x-roles:
+      - admin
+      security:
+      - sessionCookie: []
+      responses:
+        '201':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Branch'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL resource vừa tạo.
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BranchCreate'
+  /api/v1/branches/{branch_id}:
+    get:
+      operationId: getBranch
+      summary: getBranch
+      tags:
+      - branches
+      x-roles:
+      - admin
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Branch'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: branch_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/fraud-rule-versions:
+    get:
+      operationId: listRuleVersions
+      summary: listRuleVersions
+      tags:
+      - fraud-rule-versions
+      x-roles:
+      - admin
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RuleVersion'
+                  meta:
+                    type: object
+                    additionalProperties: false
+                    required:
+                    - next_cursor
+                    - limit
+                    properties:
+                      next_cursor:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                      limit:
+                        type: integer
+                        minimum: 1
+                        maximum: 100
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+    post:
+      operationId: createRuleVersion
+      summary: createRuleVersion
+      tags:
+      - fraud-rule-versions
+      x-roles:
+      - admin
+      security:
+      - sessionCookie: []
+      responses:
+        '201':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuleVersion'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL resource vừa tạo.
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleVersionCreate'
+  /api/v1/health/live:
+    get:
+      operationId: healthLive
+      summary: healthLive
+      tags:
+      - health
+      x-roles: []
+      security: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Health'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/health/ready:
+    get:
+      operationId: healthReady
+      summary: healthReady
+      tags:
+      - health
+      x-roles: []
+      security: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Health'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/reversal-requests/{reversal_id}:
+    get:
+      operationId: getReversalRequest
+      summary: getReversalRequest
+      tags:
+      - reversal-requests
+      x-roles:
+      - teller
+      - fraud_analyst
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ReversalRequest'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: reversal_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /api/v1/fraud-rule-versions/{rule_version_id}:
+    get:
+      operationId: getRuleVersion
+      summary: getRuleVersion
+      tags:
+      - fraud-rule-versions
+      x-roles:
+      - admin
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuleVersion'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: rule_version_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: bank_session
+  schemas:
+    Amount:
+      type: string
+      pattern: ^[1-9][0-9]*$
+      maxLength: 19
+      description: VND nguyên đồng, <=9223372036854775807, kiểm tra overflow cả kết quả ghi sổ.
+    Balance:
+      type: string
+      pattern: ^(0|[1-9][0-9]*)$
+      maxLength: 19
+    Role:
+      type: string
+      enum:
+      - customer
+      - teller
+      - fraud_analyst
+      - admin
+    Location:
+      type: object
+      additionalProperties: false
+      properties:
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+      required:
+      - latitude
+      - longitude
+    ErrorDetail:
+      type: object
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+      required:
+      - field
+      - code
+      - message
+    ErrorBody:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        request_id: *id002
+      required:
+      - code
+      - message
+      - details
+      - request_id
+    Error:
+      type: object
+      additionalProperties: false
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+      required:
+      - error
+    User:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id002
+        login:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+        customer_id:
+          anyOf:
+          - *id002
+          - type: 'null'
+        branch_id:
+          anyOf:
+          - *id002
+          - type: 'null'
+        enabled:
+          type: boolean
+        version: &id004
+          type: integer
+          minimum: 1
+      required:
+      - id
+      - login
+      - role
+      - customer_id
+      - branch_id
+      - enabled
+      - version
+    Session:
+      type: object
+      additionalProperties: false
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        csrf_token:
+          type: string
+        expires_at: *id003
+      required:
+      - user
+      - csrf_token
+      - expires_at
+    Login:
+      type: object
+      additionalProperties: false
+      properties:
+        login:
+          type: string
+          minLength: 1
+          maxLength: 100
+        password:
+          type: string
+          minLength: 1
+          maxLength: 256
+          writeOnly: true
+      required:
+      - login
+      - password
+    Customer:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id002
+        full_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        status:
+          type: string
+          enum:
+          - active
+          - archived
+        version: *id004
+        created_at: *id003
+      required:
+      - id
+      - full_name
+      - email
+      - phone
+      - status
+      - version
+      - created_at
+    CustomerCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        full_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        phone:
+          type: string
+          minLength: 5
+          maxLength: 30
+      required:
+      - full_name
+      - email
+      - phone
+    CustomerPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        full_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        phone:
+          type: string
+          minLength: 5
+          maxLength: 30
+        expected_version: *id004
+      required:
+      - expected_version
+    Account:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id002
+        number:
+          type: string
+        customer_id: *id002
+        currency:
+          type: string
+          enum:
+          - VND
+        label:
+          type: string
+        status:
+          type: string
+          enum:
+          - active
+          - frozen
+          - closed
+        posted_balance:
+          $ref: '#/components/schemas/Balance'
+        reserved_amount:
+          $ref: '#/components/schemas/Balance'
+        available_balance:
+          $ref: '#/components/schemas/Balance'
+        version: *id004
+        created_at: *id003
+      required:
+      - id
+      - number
+      - customer_id
+      - currency
+      - label
+      - status
+      - posted_balance
+      - reserved_amount
+      - available_balance
+      - version
+      - created_at
+    AccountCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        customer_id: *id002
+        label:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+      - customer_id
+      - label
+    AccountPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        label:
+          type: string
+          minLength: 1
+          maxLength: 100
+        expected_version: *id004
+      required:
+      - label
+      - expected_version
+    AccountStateChange:
+      type: object
+      additionalProperties: false
+      properties:
+        target_state:
+          type: string
+          enum:
+          - active
+          - frozen
+          - closed
+        reason: &id006
+          type: string
+          minLength: 10
+          maxLength: 1000
+        expected_version: *id004
+      required:
+      - target_state
+      - reason
+      - expected_version
+    Recipient:
+      type: object
+      additionalProperties: false
+      properties:
+        account_id: *id002
+        account_number:
+          type: string
+        display_name:
+          type: string
+          description: Tên rút gọn, không bao gồm số dư hay thông tin liên lạc.
+      required:
+      - account_id
+      - account_number
+      - display_name
+    CashRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        account_id: *id002
+        amount:
+          $ref: '#/components/schemas/Amount'
+      required:
+      - account_id
+      - amount
+    TransferRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        source_account_id: *id002
+        destination_account_id: *id002
+        amount:
+          $ref: '#/components/schemas/Amount'
+        location:
+          anyOf:
+          - $ref: '#/components/schemas/Location'
+          - type: 'null'
+      required:
+      - source_account_id
+      - destination_account_id
+      - amount
+      - location
+    Transaction:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id002
+        type:
+          type: string
+          enum:
+          - deposit
+          - withdrawal
+          - transfer
+        source_account_id:
+          anyOf:
+          - *id002
+          - type: 'null'
+        destination_account_id:
+          anyOf:
+          - *id002
+          - type: 'null'
+        amount:
+          $ref: '#/components/schemas/Amount'
+        currency:
+          type: string
+          enum:
+          - VND
+        status:
+          type: string
+          enum:
+          - pending_review
+          - posted
+          - rejected
+          - reversed
+        received_at: *id003
+        created_at: *id003
+        posted_at:
+          anyOf:
+          - *id003
+          - type: 'null'
+        fraud_reason_codes:
+          type: array
+          items:
+            type: string
+            enum:
+            - HIGH_AMOUNT
+            - DISTANT_LOCATIONS
+            - RAPID_LARGE_TRANSACTIONS
+            - LOCATION_UNAVAILABLE
+        reversal_request_id:
+          anyOf:
+          - *id002
+          - type: 'null'
+        version: *id004
+      required:
+      - id
+      - type
+      - source_account_id
+      - destination_account_id
+      - amount
+      - currency
+      - status
+      - received_at
+      - created_at
+      - posted_at
+      - fraud_reason_codes
+      - reversal_request_id
+      - version
+    RuleResult:
+      type: object
+      additionalProperties: false
+      properties:
+        rule_id:
+          type: string
+          enum:
+          - HIGH_AMOUNT
+          - DISTANT_LOCATIONS
+          - RAPID_LARGE_TRANSACTIONS
+          - LOCATION_UNAVAILABLE
+        result:
+          type: string
+          enum:
+          - matched
+          - clear
+          - unavailable
+          - skipped
+        threshold:
+          type: string
+        observed:
+          anyOf:
+          - type: string
+          - type: 'null'
+        candidate_transaction_id:
+          anyOf:
+          - *id002
+          - type: 'null'
+        candidate_received_at:
+          anyOf:
+          - *id003
+          - type: 'null'
+        candidate_sequence:
+          anyOf:
+          - &id005
+            type: integer
+            minimum: 1
+          - type: 'null'
+        current_sequence: *id005
+        location_source:
+          type: string
+          enum:
+          - branch
+          - demo_client
+          - unavailable
+        current_received_at:
+          type: string
+          format: date-time
+        current_amount:
+          $ref: '#/components/schemas/Amount'
+        candidate_amount:
+          anyOf:
+          - $ref: '#/components/schemas/Amount'
+          - type: 'null'
+        current_location:
+          anyOf:
+          - $ref: '#/components/schemas/Location'
+          - type: 'null'
+        candidate_location:
+          anyOf:
+          - $ref: '#/components/schemas/Location'
+          - type: 'null'
+      required:
+      - rule_id
+      - result
+      - threshold
+      - observed
+      - candidate_transaction_id
+      - candidate_received_at
+      - candidate_sequence
+      - current_sequence
+      - location_source
+      - current_received_at
+      - current_amount
+      - candidate_amount
+      - current_location
+      - candidate_location
+    FraudAlert:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id002
+        transaction_id: *id002
+        status:
+          type: string
+          enum:
+          - open
+          - approved
+          - rejected
+        rule_version: *id005
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleResult'
+        created_at: *id003
+        resolved_at:
+          anyOf:
+          - *id003
+          - type: 'null'
+      required:
+      - id
+      - transaction_id
+      - status
+      - rule_version
+      - results
+      - created_at
+      - resolved_at
+    ReviewDecision:
+      type: object
+      additionalProperties: false
+      properties:
+        decision:
+          type: string
+          enum:
+          - approve
+          - reject
+        reason: *id006
+      required:
+      - decision
+      - reason
+    ReversalCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        reason: *id006
+      required:
+      - reason
+    ReversalRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id002
+        original_transaction_id: *id002
+        requested_by: *id002
+        reason: *id006
+        status:
+          type: string
+          enum:
+          - pending_review
+          - posted
+          - rejected
+        analyst_id:
+          anyOf:
+          - *id002
+          - type: 'null'
+        review_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+        created_at: *id003
+      required:
+      - id
+      - original_transaction_id
+      - requested_by
+      - reason
+      - status
+      - analyst_id
+      - review_reason
+      - created_at
+    Branch:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id002
+        code:
+          type: string
+        name:
+          type: string
+        location:
+          $ref: '#/components/schemas/Location'
+        active:
+          type: boolean
+        version: *id004
+      required:
+      - id
+      - code
+      - name
+      - location
+      - active
+      - version
+    BranchCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        location:
+          $ref: '#/components/schemas/Location'
+      required:
+      - code
+      - name
+      - location
+    BranchPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        location:
+          $ref: '#/components/schemas/Location'
+        active:
+          type: boolean
+        expected_version: *id004
+        reason: *id006
+      required:
+      - expected_version
+      - reason
+    UserCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        login:
+          type: string
+          minLength: 3
+          maxLength: 100
+        password:
+          type: string
+          minLength: 12
+          maxLength: 256
+          writeOnly: true
+        role:
+          $ref: '#/components/schemas/Role'
+        customer_id:
+          anyOf:
+          - *id002
+          - type: 'null'
+        branch_id:
+          anyOf:
+          - *id002
+          - type: 'null'
+      required:
+      - login
+      - password
+      - role
+      - customer_id
+      - branch_id
+    UserPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        role:
+          $ref: '#/components/schemas/Role'
+        customer_id:
+          anyOf:
+          - *id002
+          - type: 'null'
+        branch_id:
+          anyOf:
+          - *id002
+          - type: 'null'
+        enabled:
+          type: boolean
+        expected_version: *id004
+        reason: *id006
+      required:
+      - expected_version
+      - reason
+    RuleVersion:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id002
+        version: *id005
+        high_amount_vnd:
+          $ref: '#/components/schemas/Amount'
+        distance_km:
+          type: integer
+          minimum: 1
+          maximum: 20040
+        rapid_amount_vnd:
+          $ref: '#/components/schemas/Amount'
+        rapid_seconds:
+          type: integer
+          minimum: 1
+          maximum: 3600
+        created_at: *id003
+      required:
+      - id
+      - version
+      - high_amount_vnd
+      - distance_km
+      - rapid_amount_vnd
+      - rapid_seconds
+      - created_at
+    RuleVersionCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        high_amount_vnd:
+          $ref: '#/components/schemas/Amount'
+        distance_km:
+          type: integer
+          minimum: 1
+          maximum: 20040
+        rapid_amount_vnd:
+          $ref: '#/components/schemas/Amount'
+        rapid_seconds:
+          type: integer
+          minimum: 1
+          maximum: 3600
+        expected_version: *id004
+        reason: *id006
+      required:
+      - high_amount_vnd
+      - distance_km
+      - rapid_amount_vnd
+      - rapid_seconds
+      - expected_version
+      - reason
+    AuditLog:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id002
+        actor_id:
+          anyOf:
+          - *id002
+          - type: 'null'
+        action:
+          type: string
+        resource_type:
+          type: string
+        resource_id: *id002
+        request_id: *id002
+        created_at: *id003
+      required:
+      - id
+      - actor_id
+      - action
+      - resource_type
+      - resource_id
+      - request_id
+      - created_at
+    Dashboard:
+      type: object
+      additionalProperties: false
+      properties:
+        role:
+          $ref: '#/components/schemas/Role'
+        as_of: *id003
+        total_posted_balance:
+          anyOf:
+          - $ref: '#/components/schemas/Balance'
+          - type: 'null'
+        total_reserved_amount:
+          anyOf:
+          - $ref: '#/components/schemas/Balance'
+          - type: 'null'
+        posted_transaction_count:
+          type: integer
+          minimum: 0
+        open_alert_count:
+          anyOf:
+          - type: integer
+            minimum: 0
+          - type: 'null'
+        oldest_pending_at:
+          anyOf:
+          - *id003
+          - type: 'null'
+        managed_user_count:
+          anyOf:
+          - type: integer
+            minimum: 0
+          - type: 'null'
+      required:
+      - role
+      - as_of
+      - total_posted_balance
+      - total_reserved_amount
+      - posted_transaction_count
+      - open_alert_count
+      - oldest_pending_at
+      - managed_user_count
+    Health:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - unavailable
+      required:
+      - status

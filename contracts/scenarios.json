@@ -1,0 +1,182 @@
+[
+  {
+    "id": "SC01",
+    "given": "deposit amount đúng 1 tỷ, vị trí chi nhánh, không candidate",
+    "expected": "posted; HIGH_AMOUNT clear",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC02",
+    "given": "deposit amount 1 tỷ+1",
+    "expected": "pending_review; HIGH_AMOUNT; không cộng tiền",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC03",
+    "given": "hai lệnh mỗi lệnh đúng 500 triệu trong 30s",
+    "expected": "rapid không match",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC04",
+    "given": "hai lệnh mỗi lệnh 500 triệu+1 cách 29.999s",
+    "expected": "rapid match",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC05",
+    "given": "hai lệnh mỗi lệnh 500 triệu+1 cách đúng 30s",
+    "expected": "rapid match",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC06",
+    "given": "hai lệnh mỗi lệnh 500 triệu+1 cách 30.001s",
+    "expected": "rapid clear",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC07",
+    "given": "sequence trước received_at muộn hơn current 20s",
+    "expected": "rapid match do abs(delta)<=30s",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC08",
+    "given": "hai vị trí khoảng cách đúng 500km",
+    "expected": "distant clear; so giá trị chưa round",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC09",
+    "given": "hai vị trí >500km",
+    "expected": "distant match",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC10",
+    "given": "lệnh đầu có vị trí",
+    "expected": "distance skipped no_previous",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC11",
+    "given": "current hoặc candidate trước thiếu vị trí",
+    "expected": "pending_review; LOCATION_UNAVAILABLE",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC12",
+    "given": "latitude=91 hoặc amount exponent/âm/0",
+    "expected": "422; không candidate/ledger/reserve",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC13",
+    "given": "hai lệnh rút đồng thời, tổng vượt available",
+    "expected": "chỉ lệnh đủ tiền sau lock được accept",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC14",
+    "given": "hai request cùng actor/key/body",
+    "expected": "một command; cùng resource; replay header",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC15",
+    "given": "cùng actor/key nhưng body khác",
+    "expected": "409; không post/reserve mới",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC16",
+    "given": "transfer hold rồi reject",
+    "expected": "đích không credit; nguồn release reserve",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC17",
+    "given": "approve hold rút",
+    "expected": "consume reserve và journal balance nguyên tử",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC18",
+    "given": "hai analyst approve/reject cùng lệnh",
+    "expected": "một quyết định final; quyết định còn lại409",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC19",
+    "given": "account frozen trước approve",
+    "expected": "409; pending/reserve giữ nguyên; reject được",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC20",
+    "given": "fault sau tạo entry trước audit/commit",
+    "expected": "rollback toàn bộ balances/entries/reserve/key",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC21",
+    "given": "timeout response sau commit rồi retry",
+    "expected": "trả command hiện có; không post lại",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC22",
+    "given": "reversal approved nhưng account bị debit thiếu available",
+    "expected": "409, original giữ posted, request pending",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC23",
+    "given": "customer đọc account/transaction không sở hữu",
+    "expected": "404 cả detail/list/dashboard không leak",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC24",
+    "given": "transfer credit vào recipient rồi recipient tạo lệnh",
+    "expected": "inbound không làm candidate vị trí recipient",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC25",
+    "given": "update rule sau lệnh hold",
+    "expected": "review vẫn dùng evidence/rule_version gốc",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC26",
+    "given": "request đảo lần hai khi reversal đã posted",
+    "expected": "409, journal gốc không đổi",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC27",
+    "given": "archive customer đua với account/money create",
+    "expected": "serialized; không lệnh mới sau archive",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC28",
+    "given": "disabled user/session hoặc CSRF sai",
+    "expected": "401/403; không mutation",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC29",
+    "given": "gửi rồi restart/backup restore DB cô lập",
+    "expected": "ledger/balances/reserves reconcile đúng",
+    "status": "design_acceptance_not_executed"
+  },
+  {
+    "id": "SC30",
+    "given": "admin đổi branch rồi teller gửi cash",
+    "expected": "server location theo branch snapshot đã khóa; không dùng client",
+    "status": "design_acceptance_not_executed"
+  }
+]

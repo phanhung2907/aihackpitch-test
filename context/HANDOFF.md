@@ -1,17 +1,19 @@
 # Latest handoff
 
-Updated: 2026-11-02 (Asia/Bangkok).
+Updated: 2026-11-03 (Asia/Bangkok).
 
-## Current checkpoint
+## Completed checkpoint — backend design
 
-Step 1 is complete: [detailed banking product plan](../plans/banking-webapp-plan.md). Separate frontend/backend folders contain orientation READMEs only. No application or system design has been implemented yet.
+Owner authorized overall backend design, feature designs and one consistent beginner-friendly Mermaid product flow. See [backend design index](../backend/design/README.md), [product flow](../backend/design/product-flow.md) and [API contract](../contracts/README.md).
 
-The plan specifies seven review checkpoints, API-contract-first development, contract-valid HTTP mocks, parallel frontend/backend lanes, fraud rule boundaries, ledger invariants and CI/CD acceptance gates. Owner delegated remaining decisions: section 12 now fixes frontend/backend stack, roles/session, >500 km distance, HOLD/reservations, location policy and internal transfers. These are project decisions; exact package patches are locked and verified at bootstrap.
+Delivered system/technical/data designs, 12 feature documents, Mermaid source + SVG, 39 OpenAPI operations/36 schemas, six examples and 30 acceptance scenarios. No application, migration, frontend generation or hosted CI has run.
+
+Important refinement: rapid fraud uses absolute server-received time difference <=30s among serialized candidates, so lock-order inversion cannot miss the pair. Immutable signed-delta double-entry journals and debit-only reservations are described in technical design. Plan locations reconciled to backend/design instead of the initial docs/ proposal.
 
 ## Verification
 
-Local verification passed: 10 document links resolve, required planning topics are present, and Git whitespace checks pass. The plan was reviewed for scope, dependencies, boundary cases and checkpoint consistency. Application tests/build and hosted CI are not applicable to this documentation-only step. Verify the final push from Git history when resuming.
+OpenAPI spec and six example schema validations pass. Mermaid rendered to SVG/PNG and visually reviewed, then simplified for readability. Local links, Mermaid source/embedded block synchronization, and whitespace are checked at closeout. Runtime scenarios are future acceptance criteria, not executed tests.
 
 ## Next action
 
-STOP for owner review. After approval, execute step 2: technical/system/flow designs with Mermaid and canonical OpenAPI/examples. Do not begin frontend/backend implementation until the shared contract is approved. ECC skills remain local-only and ignored by Git.
+STOP for owner review before bootstrap or implementation. After design/contract approval, follow plan step 3, lock compatible package patches and establish runtime/CI commands. Frontend/backend then share the canonical contract and mock scenarios. ECC remains local-only and ignored by Git.

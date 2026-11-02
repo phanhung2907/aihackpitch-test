@@ -12,3 +12,5 @@ Use the [task template](templates/TASK.md) for a substantial handoff. For concur
 Keep notes concise and evidence-backed. Store important context in these tracked Markdown files rather than relying on a previous chat or one agent's local memory. Do not invent product requirements or treat outdated notes as current code evidence.
 
 Banking project: [detailed plan and approval checkpoints](../plans/banking-webapp-plan.md).
+
+Backend: [system and feature design index](../backend/design/README.md) · [A-to-Z product flow](../backend/design/product-flow.md).

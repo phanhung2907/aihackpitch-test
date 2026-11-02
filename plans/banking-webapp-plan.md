@@ -60,9 +60,9 @@ Nếu chủ repo muốn sửa/xóa trực tiếp giao dịch, phải thống nh�
 | --- | --- | --- |
 | HIGH_AMOUNT | amount > 1.000.000.000 | đúng 1 tỷ không match, 1 tỷ + 1 match |
 | DISTANT_LOCATIONS | Khoảng cách hai giao dịch liên tiếp cùng tài khoản > ngưỡng km | dưới/bằng/trên ngưỡng; cùng vị trí; thiếu vị trí; tọa độ sai |
-| RAPID_LARGE_TRANSACTIONS | Có giao dịch trước > 500 triệu và lệnh hiện tại > 500 triệu trong cửa sổ 30 giây | đúng 500 triệu không match; 500 triệu + 1; 29,999s/30s/30,001s |
+| RAPID_LARGE_TRANSACTIONS | Có giao dịch trước > 500 triệu và lệnh hiện tại > 500 triệu trong khoảng chênh lệch 30 giây | đúng 500 triệu không match; 500 triệu + 1; 29,999s/30s/30,001s |
 
-Ngữ nghĩa chốt: dùng thời gian nhận tại server UTC, cửa sổ đóng [t-30s, t]; so với các lệnh hợp lệ đã được chấp nhận trước đó (posted hoặc pending_review), loại lệnh rejected, validation failure và retry trùng key. Luật khoảng cách so với lệnh hợp lệ liền trước theo thứ tự xử lý được serialize; luật tốc độ tìm mọi lệnh lớn phù hợp trong cửa sổ, không chỉ giao dịch liền trước. Một lệnh có thể match nhiều luật, không nhân đôi bút toán.
+Ngữ nghĩa chốt: dùng thời gian nhận tại server UTC, cửa sổ thời gian chênh lệch tuyệt đối <=30s giữa các candidate đã serialize; xem refinement tại backend/design/technical-design.md để xử lý received_at đảo thứ tự; so với các lệnh hợp lệ đã được chấp nhận trước đó (posted hoặc pending_review), loại lệnh rejected, validation failure và retry trùng key. Luật khoảng cách so với lệnh hợp lệ liền trước theo thứ tự xử lý được serialize; luật tốc độ tìm mọi lệnh lớn phù hợp trong cửa sổ, không chỉ giao dịch liền trước. Một lệnh có thể match nhiều luật, không nhân đôi bút toán.
 
 Chuyển tiền đánh giá tài khoản nguồn là bên khởi tạo; khoản credit nhận tiền không được tính như một thao tác có mặt tại địa điểm của người nhận. Gửi/rút tại quầy dùng vị trí chi nhánh do server tra cứu từ giao dịch viên; quy tắc áp dụng trên tài khoản khách hàng. Khi thiếu vị trí, không tự coi khoảng cách là 0 hoặc coi kiểm tra đã đạt; hold với lý do riêng LOCATION_UNAVAILABLE. Trình bày khả năng false positive và cho phép cấu hình ngưỡng có phiên bản/audit.
 
@@ -253,3 +253,5 @@ Core money/fraud modules đạt line và branch coverage >= 80%, cộng toàn b�
 - [openapi-typescript](https://openapi-ts.dev/introduction): sinh TypeScript từ OpenAPI 3.1.
 
 Các lựa chọn kiến trúc/nghiệp vụ là quyết định của dự án; tài liệu thư viện chứng minh khả năng của công cụ, không thay thế kiểm thử tương thích stack khi bootstrap.
+
+Thiết kế backend theo yêu cầu mới được tập trung tại [backend/design](../backend/design/README.md), thay vị trí docs/ dự kiến ban đầu. Hợp đồng canonical vẫn ở contracts/openapi.yaml để frontend/backend dùng chung.

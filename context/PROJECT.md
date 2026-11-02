@@ -1,10 +1,10 @@
 # Project facts
 
-Last updated: 2026-11-02 (Asia/Bangkok).
+Last updated: 2026-11-03 (Asia/Bangkok).
 
 ## Confirmed scope
 
-The owner wants a banking webapp with customer/account CRUD, deposits, withdrawals, and fraud detection. Required backend: Python/FastAPI; database: PostgreSQL in Docker. Keep `frontend/` and `backend/` separate. Plan shared API contracts and mock data so frontend and backend can develop in parallel and integrate later. Fraud scenarios: amount above VND 1 billion; consecutive transactions at distant locations; two transactions each above VND 500 million within 30 seconds. Distance >500 km and HOLD/review are now decided; detailed tech and business policies are in section 12 of the plan. Frontend: React/TypeScript/Vite, Tailwind/shadcn, React Router, TanStack Query, MSW and generated OpenAPI types. Finish, commit/push, and stop for owner review after each step. Detailed plan is now drafted in plans/banking-webapp-plan.md; awaiting owner review before system/API design.
+The owner wants a banking webapp with customer/account CRUD, deposits, withdrawals, and fraud detection. Required backend: Python/FastAPI; database: PostgreSQL in Docker. Keep `frontend/` and `backend/` separate. Plan shared API contracts and mock data so frontend and backend can develop in parallel and integrate later. Fraud scenarios: amount above VND 1 billion; consecutive transactions at distant locations; two transactions each above VND 500 million within 30 seconds. Distance >500 km and HOLD/review are now decided; detailed tech and business policies are in section 12 of the plan. Frontend: React/TypeScript/Vite, Tailwind/shadcn, React Router, TanStack Query, MSW and generated OpenAPI types. Finish, commit/push, and stop for owner review after each step. Owner authorized backend design. System/technical/data and 12 feature designs are in backend/design; shared OpenAPI is in contracts/openapi.yaml. Awaiting review before bootstrap.
 
 ## Repository
 

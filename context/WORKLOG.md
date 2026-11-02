@@ -32,3 +32,11 @@
 - Owner delegated remaining planning choices. Fixed frontend/backend stack, contract/mock tooling, auth/roles, fraud thresholds/location policy, reservations and review semantics in plan section 12.
 - Updated frontend/backend orientation notes and shared context. No runtime packages installed; implementation/technical design checkpoint remains pending.
 - Verified documentation links, decision consistency and whitespace; runtime tests are not applicable to this documentation change.
+
+## 2026-11-03 — Backend design checkpoint
+
+- Added system/technical/data models and 12 feature designs under backend/design.
+- Created one A-to-Z Mermaid product flow with consistent shapes/names/labeled arrows, source and SVG; simplified after PNG visual review.
+- Added shared OpenAPI (39 operations, 36 schemas), six examples and 30 not-yet-executed acceptance scenarios.
+- Validated OpenAPI/examples and rendered Mermaid. Link/whitespace checks at closeout. Runtime, hosted CI and deployment are not performed.
+- Clarified rapid-rule out-of-order handling and reconciled plan/context paths. Next: owner review before bootstrap.

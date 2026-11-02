@@ -1,0 +1,70 @@
+[
+  {
+    "schema": "CashRequest",
+    "name": "deposit-high-amount",
+    "value": {
+      "account_id": "00000000-0000-4000-8000-000000000001",
+      "amount": "1000000001"
+    }
+  },
+  {
+    "schema": "TransferRequest",
+    "name": "transfer-demo-location",
+    "value": {
+      "source_account_id": "00000000-0000-4000-8000-000000000001",
+      "destination_account_id": "00000000-0000-4000-8000-000000000002",
+      "amount": "500000001",
+      "location": {
+        "latitude": 21.0285,
+        "longitude": 105.8542
+      }
+    }
+  },
+  {
+    "schema": "TransferRequest",
+    "name": "transfer-missing-location",
+    "value": {
+      "source_account_id": "00000000-0000-4000-8000-000000000001",
+      "destination_account_id": "00000000-0000-4000-8000-000000000002",
+      "amount": "1000",
+      "location": null
+    }
+  },
+  {
+    "schema": "ReviewDecision",
+    "name": "analyst-approve",
+    "value": {
+      "decision": "approve",
+      "reason": "Đã kiểm tra bằng chứng mô phỏng."
+    }
+  },
+  {
+    "schema": "ReviewDecision",
+    "name": "analyst-reject",
+    "value": {
+      "decision": "reject",
+      "reason": "Không xác minh được vị trí giao dịch."
+    }
+  },
+  {
+    "schema": "Transaction",
+    "name": "held-deposit",
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "type": "deposit",
+      "source_account_id": null,
+      "destination_account_id": "00000000-0000-4000-8000-000000000001",
+      "amount": "1000000001",
+      "currency": "VND",
+      "status": "pending_review",
+      "received_at": "2026-11-02T01:00:00Z",
+      "created_at": "2026-11-02T01:00:00Z",
+      "posted_at": null,
+      "fraud_reason_codes": [
+        "HIGH_AMOUNT"
+      ],
+      "reversal_request_id": null,
+      "version": 1
+    }
+  }
+]

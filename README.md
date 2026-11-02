@@ -19,4 +19,4 @@ Shared project workspace with an Obsidian vault and persistent context for codin
 | `context/templates/TASK.md` | Reusable task handoff format |
 | `.obsidian/` | Shared vault settings |
 
-The application stack and deployment target have not been chosen. Add application CI/CD when the project has real build/test commands and a deployment target. Agent commit/push instructions do not themselves constitute a hosted CI/CD pipeline.
+The banking stack is defined in the [product plan](plans/banking-webapp-plan.md). Read the [backend system and feature designs](backend/design/README.md), [A-to-Z product diagram](backend/design/product-flow.md) and [shared API contract](contracts/README.md). These are design artifacts; application code and hosted CI/CD are not implemented yet.
