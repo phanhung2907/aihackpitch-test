@@ -30,3 +30,13 @@ Desktop.ini
 /.agents/ECC-LICENSE
 /.agents/ecc-installation.json
 /.agents/README.md
+
+# Backend Python artifacts
+backend/.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
