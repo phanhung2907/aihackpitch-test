@@ -22,6 +22,10 @@ The repository root is the Obsidian vault (`Open folder as vault`). Shared setti
 
 `graphify-out/` holds a generated knowledge graph of the 11 Markdown files in this repository: 73 nodes, 124 edges and 8 labelled communities, with `graph.html`, `graph.json` and `GRAPH_REPORT.md`. The folder is ignored by Git because it contains machine-specific interpreter paths and an extraction cache; regenerate it with the graphify skill rather than sharing it. The health check reported three collapsed undirected edges (duplicate endpoint pairs), so edge counts are approximate. Extraction was LLM-based, so the graph is a navigation aid, not an authoritative index of the plan. This earlier graph predates the backend design and contracts; regenerate it to include the new artifacts.
 
+## Banking UI branch
+
+Branch `codex/banking-ui` (cut from `main` at the backend implementation commit) replaces the orientation README in `frontend/` with a working banking UI: dashboard, customers, accounts, transactions with a create-order dialog, and the fraud review queue with per-rule evidence and a mandatory decision reason. Screens read static fixtures shaped by the canonical contract; no API call, no MSW. See [the frontend readme](../frontend/README.md). `main` is untouched by this branch.
+
 ## Verification
 
 Local unit/feature/contract/system suite, Ruff/format/mypy, runtime dependency audit, Docker startup/health, HTTP HOLD/reject/history and isolated restore reconciliation passed. Check implementation report for exact counts and commands. Hosted CI is separate; verify the actual GitHub run after publication. Demo config/credentials, .venv, coverage output and backup dumps stay ignored.

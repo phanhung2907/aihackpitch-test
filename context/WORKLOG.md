@@ -76,3 +76,12 @@
 - Next: owner review before frontend/MSW work and browser-level E2E. No production deployment.
 
 - Owner requested stopping extensive testing: keep existing unit/integration evidence. Fixed Swagger cache/version behavior with an explicit canonical OpenAPI override; added a pure contract regression. No further deep test cycles planned.
+
+## 2026-11-03 — Banking UI on codex/banking-ui
+
+- Replaced the `frontend/` orientation README with a React/Vite/shadcn UI based on satnaing/shadcn-admin (MIT, upstream `e16c87f`), keeping its LICENSE and original readme.
+- Added screens for the dashboard, customers, accounts, transactions and the fraud review queue, typed by hand against `contracts/openapi.yaml`.
+- Business rules honoured in the UI: money as digit strings formatted through BigInt, available = posted minus reserved, UTC stored and Asia/Ho_Chi_Minh displayed, the four hold reason codes, a 10-1000 character review reason, and transfer locations labelled unverified.
+- Deviations from plan section 12 recorded in the frontend readme: TanStack Router instead of React Router, no MSW yet, types written by hand rather than generated.
+- Next: generate types with openapi-typescript and move the screens onto MSW handlers, then onto the real API.
+
