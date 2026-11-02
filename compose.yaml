@@ -78,5 +78,26 @@ services:
       interval: 5s
       timeout: 3s
       retries: 12
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    profiles:
+    - app
+    ports:
+    - 127.0.0.1:8080:80
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -q
+      - --spider
+      - http://127.0.0.1/
+      interval: 5s
+      timeout: 3s
+      retries: 12
 volumes:
   banking-data: null

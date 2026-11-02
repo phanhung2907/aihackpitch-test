@@ -1,45 +1,6 @@
-import { getRouteApi } from '@tanstack/react-router'
-import { ConfigDrawer } from '@/components/config-drawer'
-import { Header } from '@/components/layout/header'
-import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
-import { UsersDialogs } from './components/users-dialogs'
-import { UsersPrimaryButtons } from './components/users-primary-buttons'
-import { UsersProvider } from './components/users-provider'
-import { UsersTable } from './components/users-table'
-import { users } from './data/users'
-
-const route = getRouteApi('/_authenticated/users/')
-
-export function Users() {
-  const search = route.useSearch()
-  const navigate = route.useNavigate()
-
-  return (
-    <UsersProvider>
-      <Header fixed>
-        <Search className='me-auto' />
-        <ThemeSwitch />
-        <ConfigDrawer />
-        <ProfileDropdown />
-      </Header>
-
-      <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
-        <div className='flex flex-wrap items-end justify-between gap-2'>
-          <div>
-            <h2 className='text-2xl font-bold tracking-tight'>User List</h2>
-            <p className='text-muted-foreground'>
-              Manage your users and their roles here.
-            </p>
-          </div>
-          <UsersPrimaryButtons />
-        </div>
-        <UsersTable data={users} search={search} navigate={navigate} />
-      </Main>
-
-      <UsersDialogs />
-    </UsersProvider>
-  )
-}
+import { PageShell } from '@/features/banking/components/page-shell'
+import { useBankingData } from '@/features/banking/api/data'
+import { request } from '@/features/banking/api/client'
+import { ActionForm,type Field } from '@/features/banking/actions'
+import { BankingTable } from '@/features/banking/components/banking-table'
+export function Users(){const {users,branches,role}=useBankingData();const roles=['customer','teller','fraud_analyst','admin'].map(v=>({value:v,label:v}));const fields:Field[]=[{name:'login',label:'Tên đăng nhập'},{name:'password',label:'Mật khẩu (ít nhất 12 ký tự)',type:'password'},{name:'role',label:'Vai trò',options:roles},{name:'customer_id',label:'ID khách hàng (chỉ customer)',optional:true},{name:'branch_id',label:'Chi nhánh (chỉ teller)',optional:true,options:branches.map(b=>({value:b.id,label:b.name}))}];return <PageShell title='Người dùng hệ thống' description='Quản trị cấp tài khoản và quyền. Thay đổi quyền sẽ hủy phiên đăng nhập của người dùng.' actions={role==='admin'?<ActionForm title='Thêm người dùng' variant='default' fields={fields} submit={v=>request('/users','POST',{...v,customer_id:v.customer_id||null,branch_id:v.branch_id||null})}/>:undefined}>{role==='admin'?<BankingTable data={users} searchKey='login' columns={[{accessorKey:'login',header:'Tên đăng nhập'},{accessorKey:'role',header:'Vai trò'},{id:'enabled',header:'Trạng thái',cell:({row})=>row.original.enabled?'Hoạt động':'Đã vô hiệu'},{id:'action',header:'Thao tác',cell:({row})=>{const u=row.original;return <ActionForm title='Sửa quyền / trạng thái' fields={[{name:'role',label:'Vai trò',value:u.role,options:roles},{name:'customer_id',label:'ID khách hàng (customer)',value:u.customer_id??'',optional:true},{name:'branch_id',label:'Chi nhánh (teller)',value:u.branch_id??'',optional:true,options:branches.map(b=>({value:b.id,label:b.name}))},{name:'enabled',label:'Hoạt động',value:String(u.enabled),options:[{value:'true',label:'Có'},{value:'false',label:'Không'}]},{name:'reason',label:'Lý do (10–1000 ký tự)'}]} submit={v=>request('/users/'+u.id,'PATCH',{role:v.role,customer_id:v.customer_id||null,branch_id:v.branch_id||null,enabled:v.enabled==='true',reason:v.reason,expected_version:u.version})}/>}}]}/>:<p>Bạn không có quyền quản lý người dùng.</p>}</PageShell>}

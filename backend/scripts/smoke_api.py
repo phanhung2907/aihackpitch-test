@@ -1,5 +1,6 @@
 """Black-box smoke test against the loopback-only Docker demo API."""
 
+import argparse
 import os
 from uuid import uuid4
 
@@ -11,7 +12,9 @@ from banking.manage import sid
 
 def main():
     load_local_env()
-    base = "http://localhost:8000"
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--base-url", default="http://localhost:8000")
+    base = parser.parse_args().base_url.rstrip("/")
 
     def login(name):
         c = httpx.Client(base_url=base, headers={"Origin": base}, timeout=20)
@@ -25,8 +28,8 @@ def main():
     with httpx.Client(base_url=base, timeout=20) as public:
         assert public.get("/api/v1/health/live").status_code == 200
         assert public.get("/api/v1/health/ready").status_code == 200
-        assert public.get("/docs").status_code == 200
-        assert len(public.get("/openapi.json").json()["paths"]) > 20
+        assert public.get("/").status_code == 200
+        assert public.get("/api/v1/auth/session").status_code == 401
     teller = login("teller")
     analyst = login("analyst")
     try:
@@ -58,3 +61,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

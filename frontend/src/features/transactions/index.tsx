@@ -1,3 +1,4 @@
+import { ReversalAction } from '@/features/banking/actions'
 import { type ColumnDef } from '@tanstack/react-table'
 import { formatDateTime, formatVnd } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
@@ -10,11 +11,14 @@ import {
   transactionStatusVariants,
   transactionTypeLabels,
 } from '@/features/banking/data/labels'
-import { accountLabel, transactions } from '@/features/banking/data/mock'
+import { useBankingData } from '@/features/banking/api/data'
 import { type Transaction } from '@/features/banking/data/types'
 import { NewTransactionDialog } from './components/new-transaction-dialog'
 
-const columns: ColumnDef<Transaction>[] = [
+export function Transactions() {
+  const { accountLabel, transactions } = useBankingData()
+  const columns: ColumnDef<Transaction>[] = [
+    { id:'manage', header:'Thao tác', cell:({row})=><ReversalAction transaction={row.original} /> },
   {
     accessorKey: 'received_at',
     header: ({ column }) => (
@@ -95,7 +99,6 @@ const columns: ColumnDef<Transaction>[] = [
   },
 ]
 
-export function Transactions() {
   return (
     <PageShell
       title='Giao dịch'

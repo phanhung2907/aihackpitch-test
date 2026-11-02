@@ -1,58 +1,8 @@
-import { Link, useSearch } from '@tanstack/react-router'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { useSearch } from '@tanstack/react-router'
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card'
 import { AuthLayout } from '../auth-layout'
 import { UserAuthForm } from './components/user-auth-form'
-
 export function SignIn() {
-  const { redirect } = useSearch({ from: '/(auth)/sign-in' })
-
-  return (
-    <AuthLayout>
-      <Card className='max-w-sm gap-4'>
-        <CardHeader>
-          <CardTitle className='text-lg tracking-tight'>Sign in</CardTitle>
-          <CardDescription>
-            Enter your email and password below to log into{' '}
-            <br className='max-sm:hidden' /> your account. Don't have an
-            account?{' '}
-            <Link
-              to='/sign-up'
-              className='text-nowrap underline underline-offset-4 hover:text-primary'
-            >
-              Sign Up
-            </Link>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <UserAuthForm redirectTo={redirect} />
-        </CardContent>
-        <CardFooter>
-          <p className='px-8 text-center text-sm text-muted-foreground'>
-            By clicking sign in, you agree to our{' '}
-            <a
-              href='/terms'
-              className='underline underline-offset-4 hover:text-primary'
-            >
-              Terms of Service
-            </a>{' '}
-            and{' '}
-            <a
-              href='/privacy'
-              className='underline underline-offset-4 hover:text-primary'
-            >
-              Privacy Policy
-            </a>
-            .
-          </p>
-        </CardFooter>
-      </Card>
-    </AuthLayout>
-  )
+ const {redirect}=useSearch({from:'/(auth)/sign-in'})
+ return <AuthLayout><Card className='w-full max-w-md'><CardHeader><CardTitle>Đăng nhập ngân hàng</CardTitle><CardDescription>Dữ liệu được lưu trong hệ thống. Dùng tài khoản demo được quản trị viên cấp.</CardDescription></CardHeader><CardContent><UserAuthForm redirectTo={redirect}/><p className='mt-5 text-xs text-muted-foreground'>Giao dịch viên: teller · Khách hàng: alice / bob · Kiểm duyệt: analyst · Quản trị: admin. Mật khẩu demo nằm trong file .env của máy chạy ứng dụng.</p></CardContent></Card></AuthLayout>
 }

@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { formatVnd } from '@/lib/format'
-import { showSubmittedData } from '@/lib/show-submitted-data'
+import { toast } from 'sonner'
+import { request, type Models } from '@/features/banking/api/client'
+import { useBankingData } from '@/features/banking/api/data'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -31,7 +33,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { accounts } from '@/features/banking/data/mock'
 
 // Amount mirrors the contract's Amount schema: a positive digit string with no
 // separators, kept as a string so no money value ever passes through Number.
@@ -89,14 +90,18 @@ const formSchema = z
 
 type FormValues = z.infer<typeof formSchema>
 
-const openAccounts = accounts.filter((account) => account.status === 'active')
 
 export function NewTransactionDialog() {
+  const {accounts,role,refresh}=useBankingData()
+  const openAccounts=accounts.filter(a=>a.status==='active')
+  const [busy,setBusy]=useState(false)
+  const [error,setError]=useState('')
+  const attempts=useRef(new Map<string,string>())
   const [open, setOpen] = useState(false)
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      type: 'deposit',
+      type: role==='customer'?'transfer':'deposit',
       source_account_id: '',
       destination_account_id: '',
       amount: '',
@@ -109,7 +114,11 @@ export function NewTransactionDialog() {
   const type = form.watch('type')
   const amount = form.watch('amount')
 
-  function onSubmit(values: FormValues) {
+  async function onSubmit(values: FormValues) {
+    if(busy)return
+    setBusy(true);setError('')
+    try {
+    if(values.type==='transfer') { const recipient=await request<Models['Recipient']>('/accounts/recipient-lookup?account_number='+encodeURIComponent(values.destination_account_id??'')); values={...values,destination_account_id:recipient.account_id} }
     // The backend owns the fraud decision, the ledger and the balances; this
     // screen only shows what the request body would be.
     const payload =
@@ -133,10 +142,15 @@ export function NewTransactionDialog() {
             amount: values.amount,
           }
 
-    showSubmittedData(payload, 'Payload gửi lên API (demo, chưa gọi backend):')
+    const path=values.type==='deposit'?'/deposits':values.type==='withdrawal'?'/withdrawals':'/transfers'
+    const fingerprint=path+JSON.stringify(payload);const key=attempts.current.get(fingerprint)??crypto.randomUUID();attempts.current.set(fingerprint,key)
+    const result=await request<Models['Transaction']>(path,'POST',payload,key)
+    attempts.current.delete(fingerprint);await refresh();toast.success(result.status==='posted'?'Đã ghi sổ giao dịch':'Giao dịch đang chờ kiểm duyệt, chưa ghi sổ')
     setOpen(false)
     form.reset()
+    }catch(e){setError(e instanceof Error?e.message:'Không tạo được lệnh')}finally{setBusy(false)}
   }
+  if(!['teller','customer'].includes(role))return null
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -174,9 +188,9 @@ export function NewTransactionDialog() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value='deposit'>Gửi tiền</SelectItem>
-                      <SelectItem value='withdrawal'>Rút tiền</SelectItem>
-                      <SelectItem value='transfer'>Chuyển nội bộ</SelectItem>
+                      {role==='teller'&&<SelectItem value='deposit'>Gửi tiền</SelectItem>}
+                      {role==='teller'&&<SelectItem value='withdrawal'>Rút tiền</SelectItem>}
+                      {role==='customer'&&<SelectItem value='transfer'>Chuyển nội bộ</SelectItem>}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -222,7 +236,7 @@ export function NewTransactionDialog() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Tài khoản nhận</FormLabel>
-                    <Select
+                    {type==='transfer'?<Input placeholder='Số tài khoản người nhận' {...field} />:(<>                    <Select
                       onValueChange={field.onChange}
                       value={field.value ?? ''}
                     >
@@ -239,6 +253,7 @@ export function NewTransactionDialog() {
                         ))}
                       </SelectContent>
                     </Select>
+</>)}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -307,6 +322,7 @@ export function NewTransactionDialog() {
           </form>
         </Form>
 
+        {error&&<p role='alert' className='text-destructive text-sm'>{error}</p>}
         <DialogFooter>
           <Button
             variant='outline'
@@ -317,7 +333,7 @@ export function NewTransactionDialog() {
           >
             Hủy
           </Button>
-          <Button type='submit' form='new-transaction-form'>
+          <Button type='submit' disabled={busy} form='new-transaction-form'>
             Gửi lệnh
           </Button>
         </DialogFooter>

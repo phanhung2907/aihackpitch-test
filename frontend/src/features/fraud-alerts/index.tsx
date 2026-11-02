@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { type ColumnDef } from '@tanstack/react-table'
 import { formatDateTime, formatRelativeAge, formatVnd } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
@@ -11,37 +11,16 @@ import {
   alertStatusVariants,
   ruleLabels,
 } from '@/features/banking/data/labels'
-import {
-  dashboard,
-  fraudAlerts,
-  transactionById,
-} from '@/features/banking/data/mock'
+import { useBankingData } from '@/features/banking/api/data'
 import { type FraudAlert } from '@/features/banking/data/types'
 import { AlertReviewSheet } from './components/alert-review-sheet'
 
-const asOf = new Date(dashboard.as_of)
 
 export function FraudAlerts() {
-  // Decisions stay in component state: the demo has no backend to persist them.
-  const [resolved, setResolved] = useState<
-    Record<string, 'approved' | 'rejected'>
-  >({})
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-
-  const data = useMemo(
-    () =>
-      fraudAlerts.map((alert) =>
-        resolved[alert.id]
-          ? {
-              ...alert,
-              status: resolved[alert.id],
-              resolved_at: new Date().toISOString(),
-            }
-          : alert
-      ),
-    [resolved]
-  )
-
+  const {fraudAlerts,transactionById,refresh}=useBankingData()
+  const [selectedId,setSelectedId]=useState<string|null>(null)
+  const data=fraudAlerts
+  const asOf=new Date()
   const selected = data.find((alert) => alert.id === selectedId) ?? null
 
   const columns: ColumnDef<FraudAlert>[] = [
@@ -150,12 +129,7 @@ export function FraudAlerts() {
         onOpenChange={(open) => {
           if (!open) setSelectedId(null)
         }}
-        onDecision={(alertId, decision) =>
-          setResolved((current) => ({
-            ...current,
-            [alertId]: decision === 'approve' ? 'approved' : 'rejected',
-          }))
-        }
+        onDecision={() => { void refresh() }}
       />
     </PageShell>
   )

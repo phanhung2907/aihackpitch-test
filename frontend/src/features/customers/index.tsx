@@ -1,3 +1,4 @@
+import { CustomerCreate, CustomerActions } from '@/features/banking/actions'
 import { type ColumnDef } from '@tanstack/react-table'
 import { formatDate } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
@@ -5,10 +6,13 @@ import { DataTableColumnHeader } from '@/components/data-table'
 import { BankingTable } from '@/features/banking/components/banking-table'
 import { PageShell } from '@/features/banking/components/page-shell'
 import { customerStatusLabels } from '@/features/banking/data/labels'
-import { accounts, customers } from '@/features/banking/data/mock'
+import { useBankingData } from '@/features/banking/api/data'
 import { type Customer } from '@/features/banking/data/types'
 
-const columns: ColumnDef<Customer>[] = [
+export function Customers() {
+  const { accounts, customers } = useBankingData()
+  const columns: ColumnDef<Customer>[] = [
+    { id:'manage', header:'Thao tác', cell:({row})=><CustomerActions customer={row.original} /> },
   {
     accessorKey: 'full_name',
     header: ({ column }) => (
@@ -60,10 +64,10 @@ const columns: ColumnDef<Customer>[] = [
   },
 ]
 
-export function Customers() {
   return (
     <PageShell
       title='Khách hàng'
+      actions={<CustomerCreate />}
       description='Danh sách khách hàng và số tài khoản đang mở. Khách hàng có lịch sử tài chính chỉ được lưu trữ, không xóa.'
     >
       <BankingTable

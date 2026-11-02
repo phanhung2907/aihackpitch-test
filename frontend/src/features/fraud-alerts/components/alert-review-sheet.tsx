@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { formatDateTime, formatVnd } from '@/lib/format'
-import { showSubmittedData } from '@/lib/show-submitted-data'
+import { toast } from 'sonner'
+import { request } from '@/features/banking/api/client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -24,7 +25,7 @@ import {
   transactionStatusLabels,
   transactionTypeLabels,
 } from '@/features/banking/data/labels'
-import { accountLabel, transactionById } from '@/features/banking/data/mock'
+import { useBankingData } from '@/features/banking/api/data'
 import {
   type FraudAlert,
   type RuleResult,
@@ -126,20 +127,22 @@ export function AlertReviewSheet({
   onOpenChange,
   onDecision,
 }: AlertReviewSheetProps) {
+  const {accountLabel,transactionById,refresh}=useBankingData()
+  const [busy,setBusy]=useState(false)
+  const [error,setError]=useState('')
+  const attempts=useRef(new Map<string,string>())
   const [reason, setReason] = useState('')
   const transaction = alert ? transactionById(alert.transaction_id) : undefined
   const reasonTooShort = reason.trim().length < MIN_REASON
-  const canDecide = alert?.status === 'open' && !reasonTooShort
+  const canDecide = alert?.status === 'open' && !reasonTooShort && !busy
 
-  function decide(decision: 'approve' | 'reject') {
-    if (!alert || !canDecide) return
-    showSubmittedData(
-      { decision, reason: reason.trim() },
-      'Quyết định gửi lên API (demo, chưa gọi backend):'
-    )
-    onDecision(alert.id, decision)
-    setReason('')
-    onOpenChange(false)
+  async function decide(decision: 'approve' | 'reject') {
+    if(!alert||!canDecide)return
+    const body={decision,reason:reason.trim()};const fingerprint=alert.id+JSON.stringify(body);const key=attempts.current.get(fingerprint)??crypto.randomUUID();attempts.current.set(fingerprint,key)
+    setBusy(true);setError('')
+    try{await request('/transactions/'+alert.transaction_id+'/review-decisions','POST',body,key);attempts.current.delete(fingerprint);await refresh();onDecision(alert.id,decision);setReason('');onOpenChange(false);toast.success(decision==='approve'?'Đã duyệt và ghi sổ':'Đã từ chối và giải phóng tiền giữ chỗ')}
+    catch(e){setError(e instanceof Error?e.message:'Không lưu được quyết định')}
+    finally{setBusy(false)}
   }
 
   return (
@@ -195,7 +198,7 @@ export function AlertReviewSheet({
                   </div>
                 ) : (
                   <p className='text-muted-foreground text-sm'>
-                    Không tìm thấy giao dịch trong dữ liệu demo.
+                    Không tải được giao dịch liên quan.
                   </p>
                 )}
               </div>
@@ -234,6 +237,7 @@ export function AlertReviewSheet({
               </div>
             </div>
 
+            {error&&<p role='alert' className='px-4 text-sm text-destructive'>{error}</p>}
             <SheetFooter className='flex-row gap-2'>
               <Button
                 variant='destructive'

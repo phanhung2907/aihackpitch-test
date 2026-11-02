@@ -1,9 +1,10 @@
+import { useLocation } from '@tanstack/react-router'
+import { useBankingData } from '@/features/banking/api/data'
 import { type ReactNode } from 'react'
 import { ConfigDrawer } from '@/components/config-drawer'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
 
 type PageShellProps = {
@@ -19,10 +20,16 @@ export function PageShell({
   actions,
   children,
 }: PageShellProps) {
+  const {role}=useBankingData()
+  const location=useLocation()
+  const restrictions:Record<string,string[]>={'customers':['teller'],'accounts':['customer','teller'],'transactions':['customer','teller','fraud_analyst'],'fraud-alerts':['fraud_analyst'],'users':['admin'],'operations':['admin','teller','fraud_analyst']}
+  const required=restrictions[location.pathname.split('/')[1]]
+  const permitted=!required||required.includes(role)
+
   return (
     <>
       <Header fixed>
-        <Search className='me-auto' />
+        <span className='me-auto text-sm text-muted-foreground'>Ngân hàng · kết nối API trực tiếp</span>
         <ThemeSwitch />
         <ConfigDrawer />
         <ProfileDropdown />
@@ -34,9 +41,9 @@ export function PageShell({
             <h2 className='text-2xl font-bold tracking-tight'>{title}</h2>
             <p className='text-muted-foreground'>{description}</p>
           </div>
-          {actions}
+          {permitted&&actions}
         </div>
-        {children}
+        {permitted?children:<p role='alert'>Vai trò hiện tại không có quyền sử dụng chức năng này.</p>}
       </Main>
     </>
   )

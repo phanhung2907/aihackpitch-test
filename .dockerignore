@@ -8,5 +8,6 @@
 **/.mypy_cache
 **/.ruff_cache
 graphify-out
-frontend
 .obsidian
+frontend/node_modules
+frontend/dist

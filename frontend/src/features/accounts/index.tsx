@@ -1,3 +1,4 @@
+import { AccountCreate, AccountActions } from '@/features/banking/actions'
 import { type ColumnDef } from '@tanstack/react-table'
 import { formatVnd } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
@@ -8,10 +9,13 @@ import {
   accountStatusLabels,
   accountStatusVariants,
 } from '@/features/banking/data/labels'
-import { accounts, customerName } from '@/features/banking/data/mock'
+import { useBankingData } from '@/features/banking/api/data'
 import { type Account } from '@/features/banking/data/types'
 
-const columns: ColumnDef<Account>[] = [
+export function Accounts() {
+  const { accounts, customerName } = useBankingData()
+  const columns: ColumnDef<Account>[] = [
+    { id:'manage', header:'Thao tác', cell:({row})=><AccountActions account={row.original} /> },
   {
     accessorKey: 'number',
     header: ({ column }) => (
@@ -82,10 +86,10 @@ const columns: ColumnDef<Account>[] = [
   },
 ]
 
-export function Accounts() {
   return (
     <PageShell
       title='Tài khoản'
+      actions={<AccountCreate />}
       description='Khả dụng = số dư đã ghi sổ trừ phần đang giữ cho lệnh chờ duyệt. Giữ tiền không làm thay đổi số dư đã ghi sổ.'
     >
       <BankingTable
