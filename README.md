@@ -20,3 +20,5 @@ Shared project workspace with an Obsidian vault and persistent context for codin
 | `.obsidian/` | Shared vault settings |
 
 The banking stack is defined in the [product plan](plans/banking-webapp-plan.md). Read the [backend system and feature designs](backend/design/README.md), [A-to-Z product diagram](backend/design/product-flow.md) and [shared API contract](contracts/README.md). The [backend is implemented and runnable](backend/README.md), with PostgreSQL/Docker and unit, feature and system tests; see the [implementation report](backend/implementation-report.md). Frontend and production deployment are not implemented yet.
+
+Reusable engineering notes: [Vietnamese webapp playbook](docs/playbook/README.md), covering planning, system/feature/flow design, Mermaid, frontend/backend, fast testing and handoff. See the playbook status note for work still awaiting integration acceptance.

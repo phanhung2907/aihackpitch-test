@@ -2,11 +2,19 @@
 
 Updated: 2026-11-03 (Asia/Bangkok).
 
-## Completed checkpoint — backend implementation and testing
+## Latest checkpoint — reusable engineering playbook
+
+Delivered [ten reusable Markdown guides](../docs/playbook/README.md) for planning, system/feature/flow design, Mermaid, frontend/backend, concise testing and CI/context. Validated relative links and code fences; no application tests were rerun for this documentation task. Default test policy: affected unit tests, affected integration, then stop once required checks pass.
+
+Previous integration verification was incomplete: frontend Docker build/lint/TypeScript and 5 API unit tests passed; browser login transitioned to the main route, but full UI flows were not confirmed. HTTP smoke through the UI origin was blocked by socket permissions; escalation was rejected. Do not call that check passed or retry around the denied permission. Integration code has since landed in commit 8d3ba8e (confirmed by Git inspection). Inspect actual source before further changes.
+
+The sections below record older checkpoints. Actual frontend uses TanStack Router; MSW remains unimplemented. See current playbook status and Git history before relying on earlier pending statements.
+
+## Previous checkpoint — backend implementation and testing
 
 Owner authorized implementation, feature testing, then backend system testing. Backend is now runnable in Docker: [run instructions](../backend/README.md), [implementation report](../backend/implementation-report.md).
 
-Implemented 41 canonical API operations, auth/roles/CRUD, money/ledger/reservations/idempotency, fraud rules/review/reversal, history/dashboard/admin, Alembic 001–004 and CI gates. Local full suite: 61 passing tests; total coverage 90.29%, domain lines/branches 100%, money lines 93.4% and branches 81.2%. Runtime role cannot rewrite ledger/balances/command amount. Docker HTTP smoke and isolated backup/restore passed. Frontend is still pending.
+Implemented 41 canonical API operations, auth/roles/CRUD, money/ledger/reservations/idempotency, fraud rules/review/reversal, history/dashboard/admin, Alembic 001–004 and CI gates. Local full suite: 61 passing tests; total coverage 90.29%, domain lines/branches 100%, money lines 93.4% and branches 81.2%. Runtime role cannot rewrite ledger/balances/command amount. Docker HTTP smoke and isolated backup/restore passed. Frontend was still pending at that checkpoint.
 
 TDD RED checkpoint is 1b595fb. Contract gained missing PATCH users/branches, listBranches spelling normalized, same-origin server URL. Frontend must use the current spec, not the old 39-operation design snapshot. Runtime validates canonical JSON Schema directly, not handwritten Pydantic DTOs or a separate generated spec. Details/tradeoffs recorded in implementation report.
 

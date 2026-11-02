@@ -85,3 +85,7 @@
 - Deviations from plan section 12 recorded in the frontend readme: TanStack Router instead of React Router, no MSW yet, types written by hand rather than generated.
 - Next: generate types with openapi-typescript and move the screens onto MSW handlers, then onto the real API.
 
+
+## 2026-11-03 — Reusable webapp playbook
+
+Distilled planning, system/feature/flow design, consistent Mermaid, real frontend/backend stack, template provenance, contract-first mock/live workflow, quick testing, and CI/context into ten files under docs/playbook. Explicitly distinguish recommendations (MSW), verified local checks, and unfinished API integration. Validated all relative links and code fences; git diff --check passed. Application tests not rerun for docs. Integration source/config is in prior commit 8d3ba8e; this commit contains documentation only.

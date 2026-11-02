@@ -25,3 +25,7 @@ The owner wants a banking webapp with customer/account CRUD, deposits, withdrawa
 ## Verification and deployment
 
 Backend runs with Docker/PostgreSQL and uv/pytest; 61 local tests pass and the GitHub Actions backend workflow is configured. Verify hosted CI independently. Local Docker is the current target; no frontend or production deployment yet.
+
+## Current frontend and reusable playbook update
+
+Frontend from shadcn-admin (MIT, upstream e16c87f) is now on main; actual router is TanStack Router, superseding the earlier React Router choice. MSW remains a recommendation, not installed functionality. API integration source is committed in 8d3ba8e; full end-to-end acceptance remains unconfirmed in this chat. The reusable process is documented in [docs/playbook](../docs/playbook/README.md); use its fast unit → affected integration → stop policy, while preserving mandatory repository gates. Earlier frontend-pending statements above describe prior checkpoints.
