@@ -4,7 +4,7 @@ Last updated: 2026-11-02 (Asia/Bangkok).
 
 ## Confirmed scope
 
-The owner wants a banking webapp with customer/account CRUD, deposits, withdrawals, and fraud detection. Required backend: Python/FastAPI; database: PostgreSQL in Docker. Keep `frontend/` and `backend/` separate. Plan shared API contracts and mock data so frontend and backend can develop in parallel and integrate later. Fraud scenarios: amount above VND 1 billion; consecutive transactions at distant locations; two transactions each above VND 500 million within 30 seconds. Exact geographic thresholds and response policy await planning review. Finish, commit/push, and stop for owner review after each step. Current priority: install ECC skills in this repo before planning.
+The owner wants a banking webapp with customer/account CRUD, deposits, withdrawals, and fraud detection. Required backend: Python/FastAPI; database: PostgreSQL in Docker. Keep `frontend/` and `backend/` separate. Plan shared API contracts and mock data so frontend and backend can develop in parallel and integrate later. Fraud scenarios: amount above VND 1 billion; consecutive transactions at distant locations; two transactions each above VND 500 million within 30 seconds. Exact geographic thresholds and response policy await planning review. Finish, commit/push, and stop for owner review after each step. Detailed plan is now drafted in plans/banking-webapp-plan.md; awaiting owner review before system/API design.
 
 ## Repository
 

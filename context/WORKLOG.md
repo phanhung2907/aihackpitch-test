@@ -20,3 +20,9 @@
 - Owner requested local-only ECC. Added targeted ignore rules for the skill catalog, license, provenance, and local installation README.
 - Removed ECC installation files from the Git index while preserving the local files. Updated agent/context guidance to describe local-only availability.
 - Product planning remains pending owner review.
+
+## 2026-11-02 — Banking product plan (step 1)
+
+- Added detailed scope, fraud semantics and proposed decisions, money/ledger invariants, seven checkpoints, test/CI/CD matrix, and mock/contract strategy for parallel frontend/backend work.
+- Added frontend/backend orientation READMEs; no runtime code or dependencies yet.
+- Next: owner review, then separate technical/system/flow design step with Mermaid and OpenAPI.
