@@ -12,6 +12,10 @@ The plan specifies seven review checkpoints, API-contract-first development, con
 
 The repository root is the Obsidian vault (`Open folder as vault`). Shared settings tracked in Git: `.obsidian/app.json` (relative Markdown links, `attachments/` for pasted files), `.obsidian/core-plugins.json` (explorer, search, switcher, graph, backlinks, outgoing links, page preview, templates, outline, command palette, canvas, properties, bookmarks, bases) and `.obsidian/templates.json` (`context/templates`, `YYYY-MM-DD`). Obsidian rewrote `core-plugins.json` into its current object format; keep that format so opening the vault does not dirty the tree. Workspace layout, appearance, hotkeys, caches and community plugins stay ignored per `.gitignore`.
 
+## UI template shortlist for the competition
+
+[Ten shortlisted UI templates](../plans/ui-templates-shortlist.md) are recorded for the AI HackPitch session on 2026-11-04, ranked by fit with the fixed React + Vite + Tailwind + shadcn/ui stack in plan section 12. Star counts, licenses and last-push dates come from the GitHub API on 2026-11-03. Nothing has been installed, cloned or built; the note also flags that pre-built templates may conflict with contest rules on code written during the event.
+
 ## Verification
 
 Local verification passed: 10 document links resolve, required planning topics are present, and Git whitespace checks pass. The plan was reviewed for scope, dependencies, boundary cases and checkpoint consistency. Application tests/build and hosted CI are not applicable to this documentation-only step. Verify the final push from Git history when resuming.

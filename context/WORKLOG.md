@@ -40,3 +40,10 @@
 - Verified the shared settings files parse as JSON and that ignored personal state (workspace, appearance, hotkeys, plugins) stays untracked.
 - Next: banking webapp step 2 still waits for owner review.
 
+## 2026-11-03 — UI template shortlist for AI HackPitch
+
+- Added `plans/ui-templates-shortlist.md`: ten candidate UI templates grouped by stack fit (React/Vite/shadcn, Next.js, chart libraries).
+- Verified each repository's star count, SPDX license and last push through the GitHub API; two earlier candidates were dropped as 404 or unmaintained.
+- No template was cloned, installed or built, so no build or test evidence exists for them. Flagged license attribution and contest-rule risk.
+- Next: owner decides which template becomes the `frontend/` base; banking step 2 still waits for review.
+
