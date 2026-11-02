@@ -33,6 +33,28 @@
 - Updated frontend/backend orientation notes and shared context. No runtime packages installed; implementation/technical design checkpoint remains pending.
 - Verified documentation links, decision consistency and whitespace; runtime tests are not applicable to this documentation change.
 
+## 2026-11-02 — Obsidian vault settings
+
+- Committed Obsidian's own object format for `.obsidian/core-plugins.json` so opening the vault no longer leaves the tree dirty.
+- Enabled the command palette core plugin; added `attachments/` with a short README to match `attachmentFolderPath`.
+- Verified the shared settings files parse as JSON and that ignored personal state (workspace, appearance, hotkeys, plugins) stays untracked.
+- Next: banking webapp step 2 still waits for owner review.
+
+## 2026-11-03 — UI template shortlist for AI HackPitch
+
+- Added `plans/ui-templates-shortlist.md`: ten candidate UI templates grouped by stack fit (React/Vite/shadcn, Next.js, chart libraries).
+- Verified each repository's star count, SPDX license and last push through the GitHub API; two earlier candidates were dropped as 404 or unmaintained.
+- No template was cloned, installed or built, so no build or test evidence exists for them. Flagged license attribution and contest-rule risk.
+- Next: owner decides which template becomes the `frontend/` base; banking step 2 still waits for review.
+
+## 2026-11-03 — Knowledge graph of the repository notes
+
+- Ran the graphify pipeline over the 11 Markdown files (~6,797 words); no code files exist yet, so extraction was semantic only.
+- Result: 73 nodes, 124 edges, 8 communities (fraud rules, contract-first lanes, shared context, security/roles, ledger invariants, Git closeout, decided stack, Obsidian vault).
+- Outputs went to the ignored `graphify-out/` folder; the integrity check flagged three collapsed undirected edges and one AMBIGUOUS edge.
+- Cost for the run: 127,542 subagent tokens, with no input/output split reported by the host.
+- Next: rebuild with `graphify --update` once application code lands, so the graph covers real modules and not only documents.
+
 ## 2026-11-03 — Backend design checkpoint
 
 - Added system/technical/data models and 12 feature designs under backend/design.
@@ -40,3 +62,6 @@
 - Added shared OpenAPI (39 operations, 36 schemas), six examples and 30 not-yet-executed acceptance scenarios.
 - Validated OpenAPI/examples and rendered Mermaid. Link/whitespace checks at closeout. Runtime, hosted CI and deployment are not performed.
 - Clarified rapid-rule out-of-order handling and reconciled plan/context paths. Next: owner review before bootstrap.
+
+
+- Publication integration: preserved three concurrent remote commits (Obsidian settings, UI shortlist and ignored knowledge graph); resolved the shared work-log conflict by retaining both histories.
