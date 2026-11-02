@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
+import { apiSend } from '@/lib/api'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 
 interface SignOutDialogProps {
@@ -13,6 +14,11 @@ export function SignOutDialog({ open, onOpenChange }: SignOutDialogProps) {
   const { auth } = useAuthStore()
 
   const handleSignOut = () => {
+    // Revoke the server session too; the local reset happens either way so a
+    // failed call still logs the person out of this tab.
+    apiSend('POST', '/auth/logout', { csrfToken: auth.csrfToken }).catch(
+      () => undefined
+    )
     auth.reset()
     // Preserve current location for redirect after sign-in
     const currentPath = location.href

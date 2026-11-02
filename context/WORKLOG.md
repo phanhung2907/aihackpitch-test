@@ -85,3 +85,14 @@
 - Deviations from plan section 12 recorded in the frontend readme: TanStack Router instead of React Router, no MSW yet, types written by hand rather than generated.
 - Next: generate types with openapi-typescript and move the screens onto MSW handlers, then onto the real API.
 
+## 2026-11-03 — Connect the frontend to the backend API
+
+- Added `src/lib/api.ts` as the only HTTP client: `/api/v1` base, CSRF and Idempotency-Key headers on writes, `{data, meta}` unwrapping, and an `ApiError` carrying status and code.
+- Added TanStack Query hooks per contract operation and invalidated transactions, accounts, alerts and dashboard after every money command.
+- Replaced the mock sign-in with a real `POST /auth/login`, rewrote the auth store to hold the user and CSRF token in memory, and added a session guard that redirects to `/sign-in` on 401.
+- Deleted the fixture module; every screen now renders API data with shared loading and error states, including a readable message for 403.
+- Added a Vite proxy for `/api` and documented that the dev origin must be listed in `ALLOWED_ORIGINS`.
+- Verified: `npx tsc -b`, `npm run build`, `npm run lint` pass; backend running in Docker answered login, session, accounts and a deposit of 1000000001 that came back held with HIGH_AMOUNT; the Vite proxy returned 200 for the liveness probe.
+- Not verified: the browser login flow and on-screen data, because entering the demo password was out of scope for automation here. Unit tests still need a Playwright Chromium download.
+- Next: check the login and the screens manually in a browser, then add cursor pagination and generate types with openapi-typescript.
+

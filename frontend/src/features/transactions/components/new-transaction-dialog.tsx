@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { z } from 'zod'
+import { ApiError } from '@/lib/api'
 import { formatVnd } from '@/lib/format'
-import { showSubmittedData } from '@/lib/show-submitted-data'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -31,14 +32,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { accounts } from '@/features/banking/data/mock'
+import {
+  newIdempotencyKey,
+  useCreateCashCommand,
+  useCreateTransfer,
+} from '@/features/banking/data/queries'
+import {
+  transactionStatusLabels,
+  ruleLabels,
+} from '@/features/banking/data/labels'
+import { type Account, type Transaction } from '@/features/banking/data/types'
 
 // Amount mirrors the contract's Amount schema: a positive digit string with no
 // separators, kept as a string so no money value ever passes through Number.
 const amountSchema = z
   .string()
   .min(1, 'Nhập số tiền.')
-  .regex(/^[1-9][0-9]*$/, 'Chỉ nhập chữ số, không dấu phân cách, phải lớn hơn 0.')
+  .regex(
+    /^[1-9][0-9]*$/,
+    'Chỉ nhập chữ số, không dấu phân cách, phải lớn hơn 0.'
+  )
   .refine((value) => value.length <= 19, 'Số tiền vượt giới hạn lưu trữ.')
 
 const formSchema = z
@@ -89,10 +102,28 @@ const formSchema = z
 
 type FormValues = z.infer<typeof formSchema>
 
-const openAccounts = accounts.filter((account) => account.status === 'active')
+const ERROR_MESSAGES: Record<string, string> = {
+  INSUFFICIENT_FUNDS: 'Số dư khả dụng không đủ cho lệnh này.',
+  ACCOUNT_NOT_ACTIVE: 'Tài khoản không ở trạng thái hoạt động.',
+  FORBIDDEN: 'Vai trò hiện tại không được phép tạo lệnh này.',
+  IDEMPOTENCY_CONFLICT:
+    'Cùng Idempotency-Key nhưng payload khác. Đổi nội dung lệnh hoặc mở lại hộp thoại.',
+  VALIDATION_FAILED: 'Máy chủ từ chối dữ liệu lệnh.',
+  CSRF_FAILED: 'Token CSRF không hợp lệ, đăng nhập lại.',
+}
 
-export function NewTransactionDialog() {
+export function NewTransactionDialog({ accounts }: { accounts: Account[] }) {
   const [open, setOpen] = useState(false)
+  // One Idempotency-Key per distinct command: resubmitting the same payload is
+  // a retry and must reuse its key, while an edited payload is a new command.
+  const keys = useRef(new Map<string, string>())
+
+  const deposit = useCreateCashCommand('deposits')
+  const withdrawal = useCreateCashCommand('withdrawals')
+  const transfer = useCreateTransfer()
+  const isPending =
+    deposit.isPending || withdrawal.isPending || transfer.isPending
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -109,33 +140,73 @@ export function NewTransactionDialog() {
   const type = form.watch('type')
   const amount = form.watch('amount')
 
-  function onSubmit(values: FormValues) {
-    // The backend owns the fraud decision, the ledger and the balances; this
-    // screen only shows what the request body would be.
-    const payload =
-      values.type === 'transfer'
-        ? {
-            source_account_id: values.source_account_id,
-            destination_account_id: values.destination_account_id,
-            amount: values.amount,
-            location: values.latitude
-              ? {
-                  latitude: Number(values.latitude),
-                  longitude: Number(values.longitude),
-                }
-              : null,
-          }
-        : {
-            account_id:
-              values.type === 'deposit'
-                ? values.destination_account_id
-                : values.source_account_id,
-            amount: values.amount,
-          }
+  const openAccounts = accounts.filter((account) => account.status === 'active')
 
-    showSubmittedData(payload, 'Payload gửi lên API (demo, chưa gọi backend):')
-    setOpen(false)
-    form.reset()
+  function keyFor(payload: unknown): string {
+    const fingerprint = JSON.stringify(payload)
+    const existing = keys.current.get(fingerprint)
+    if (existing) return existing
+    const key = newIdempotencyKey()
+    keys.current.set(fingerprint, key)
+    return key
+  }
+
+  function describe(transaction: Transaction): string {
+    const status = transactionStatusLabels[transaction.status]
+    if (transaction.fraud_reason_codes.length === 0) return status
+    const reasons = transaction.fraud_reason_codes
+      .map((code) => ruleLabels[code])
+      .join(', ')
+    return `${status} — ${reasons}`
+  }
+
+  async function onSubmit(values: FormValues) {
+    try {
+      let created: Transaction
+      if (values.type === 'transfer') {
+        const payload = {
+          source_account_id: values.source_account_id!,
+          destination_account_id: values.destination_account_id!,
+          amount: values.amount,
+          location: values.latitude
+            ? {
+                latitude: Number(values.latitude),
+                longitude: Number(values.longitude),
+              }
+            : null,
+        }
+        created = await transfer.mutateAsync({
+          ...payload,
+          idempotencyKey: keyFor({ kind: 'transfer', ...payload }),
+        })
+      } else {
+        const payload = {
+          account_id:
+            values.type === 'deposit'
+              ? values.destination_account_id!
+              : values.source_account_id!,
+          amount: values.amount,
+        }
+        const command = values.type === 'deposit' ? deposit : withdrawal
+        created = await command.mutateAsync({
+          ...payload,
+          idempotencyKey: keyFor({ kind: values.type, ...payload }),
+        })
+      }
+
+      toast.success(
+        `${formatVnd(created.amount)} · ${describe(created)}`,
+        { description: `Mã lệnh ${created.id}` }
+      )
+      setOpen(false)
+      form.reset()
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? (ERROR_MESSAGES[error.code] ?? `${error.code}: ${error.message}`)
+          : 'Không gọi được API. Kiểm tra backend đang chạy.'
+      toast.error(message)
+    }
   }
 
   return (
@@ -147,8 +218,8 @@ export function NewTransactionDialog() {
         <DialogHeader>
           <DialogTitle>Tạo lệnh tiền</DialogTitle>
           <DialogDescription>
-            Số tiền nhập theo đồng nguyên, không dấu phân cách. Kết quả gian lận
-            do máy chủ quyết định sau khi nhận lệnh.
+            Số tiền nhập theo đồng nguyên, không dấu phân cách. Máy chủ quyết
+            định ghi sổ hay giữ lại sau khi chạy luật gian lận.
           </DialogDescription>
         </DialogHeader>
 
@@ -298,9 +369,9 @@ export function NewTransactionDialog() {
                   )}
                 />
                 <p className='text-muted-foreground col-span-2 text-xs'>
-                  Vị trí chuyển khoản là dữ liệu mô phỏng từ trình duyệt và hiển
-                  thị là chưa xác minh. Bỏ trống thì lệnh sẽ bị giữ với lý do
-                  LOCATION_UNAVAILABLE.
+                  Vị trí chuyển khoản là dữ liệu mô phỏng từ trình duyệt và máy
+                  chủ đánh dấu là chưa xác minh. Bỏ trống thì lệnh bị giữ với lý
+                  do LOCATION_UNAVAILABLE.
                 </p>
               </div>
             )}
@@ -317,8 +388,12 @@ export function NewTransactionDialog() {
           >
             Hủy
           </Button>
-          <Button type='submit' form='new-transaction-form'>
-            Gửi lệnh
+          <Button
+            type='submit'
+            form='new-transaction-form'
+            disabled={isPending}
+          >
+            {isPending ? 'Đang gửi...' : 'Gửi lệnh'}
           </Button>
         </DialogFooter>
       </DialogContent>

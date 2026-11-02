@@ -21,6 +21,17 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      // Same-origin /api in dev so the HttpOnly session cookie is sent and the
+      // Origin header stays this app's origin, which the backend validates on
+      // writes. Keep this origin in ALLOWED_ORIGINS in the repo-root .env.
+      '/api': {
+        target: process.env.VITE_API_TARGET ?? 'http://localhost:8000',
+        changeOrigin: false,
+      },
+    },
+  },
   test: {
     silent: 'passed-only',
     unstubEnvs: true,

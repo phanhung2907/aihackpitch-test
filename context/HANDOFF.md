@@ -26,6 +26,10 @@ The repository root is the Obsidian vault (`Open folder as vault`). Shared setti
 
 Branch `codex/banking-ui` (cut from `main` at the backend implementation commit) replaces the orientation README in `frontend/` with a working banking UI: dashboard, customers, accounts, transactions with a create-order dialog, and the fraud review queue with per-rule evidence and a mandatory decision reason. Screens read static fixtures shaped by the canonical contract; no API call, no MSW. See [the frontend readme](../frontend/README.md). `main` is untouched by this branch.
 
+## Frontend is wired to the backend
+
+The screens in `frontend/` now call the real API instead of fixtures: one HTTP client in `src/lib/api.ts`, TanStack Query hooks per contract operation in `src/features/banking/data/queries.ts`, a session guard on `/_authenticated`, and real login against `POST /api/v1/auth/login`. Vite proxies `/api` to `http://localhost:8000` so the HttpOnly session cookie and the Origin check both work. Running it needs the backend up and `http://localhost:5173` in `ALLOWED_ORIGINS`; see [the frontend readme](../frontend/README.md).
+
 ## Verification
 
 Local unit/feature/contract/system suite, Ruff/format/mypy, runtime dependency audit, Docker startup/health, HTTP HOLD/reject/history and isolated restore reconciliation passed. Check implementation report for exact counts and commands. Hosted CI is separate; verify the actual GitHub run after publication. Demo config/credentials, .venv, coverage output and backup dumps stay ignored.

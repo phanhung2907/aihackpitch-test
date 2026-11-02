@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { toast } from 'sonner'
+import { ApiError } from '@/lib/api'
 import { formatDateTime, formatVnd } from '@/lib/format'
-import { showSubmittedData } from '@/lib/show-submitted-data'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -24,19 +25,36 @@ import {
   transactionStatusLabels,
   transactionTypeLabels,
 } from '@/features/banking/data/labels'
-import { accountLabel, transactionById } from '@/features/banking/data/mock'
+import {
+  newIdempotencyKey,
+  useReviewTransaction,
+} from '@/features/banking/data/queries'
 import {
   type FraudAlert,
   type RuleResult,
+  type Transaction,
 } from '@/features/banking/data/types'
 
 const MIN_REASON = 10
 const MAX_REASON = 1000
 
+const ERROR_MESSAGES: Record<string, string> = {
+  FORBIDDEN:
+    'Không đủ quyền: người tạo lệnh không được tự duyệt lệnh của mình.',
+  SELF_APPROVAL_FORBIDDEN:
+    'Người tạo lệnh không được tự duyệt lệnh của mình.',
+  INSUFFICIENT_FUNDS:
+    'Số dư khả dụng không còn đủ để ghi sổ, lệnh vẫn đang chờ.',
+  CONFLICT: 'Điều kiện ghi sổ không đạt, lệnh vẫn đang chờ và tiền vẫn bị giữ.',
+  ALREADY_REVIEWED: 'Cảnh báo này đã có quyết định.',
+  CSRF_FAILED: 'Token CSRF không hợp lệ, đăng nhập lại.',
+}
+
 type AlertReviewSheetProps = {
   alert: FraudAlert | null
+  transaction: Transaction | undefined
+  accountLabel: (accountId: string | null) => string
   onOpenChange: (open: boolean) => void
-  onDecision: (alertId: string, decision: 'approve' | 'reject') => void
 }
 
 function EvidenceRow({ label, value }: { label: string; value: string }) {
@@ -123,23 +141,49 @@ function RuleEvidence({ result }: { result: RuleResult }) {
 
 export function AlertReviewSheet({
   alert,
+  transaction,
+  accountLabel,
   onOpenChange,
-  onDecision,
 }: AlertReviewSheetProps) {
   const [reason, setReason] = useState('')
-  const transaction = alert ? transactionById(alert.transaction_id) : undefined
-  const reasonTooShort = reason.trim().length < MIN_REASON
-  const canDecide = alert?.status === 'open' && !reasonTooShort
+  // A decision retry must reuse its key; a changed decision or reason is a new
+  // command and gets a new one.
+  const keys = useRef(new Map<string, string>())
+  const review = useReviewTransaction()
 
-  function decide(decision: 'approve' | 'reject') {
+  const reasonTooShort = reason.trim().length < MIN_REASON
+  const canDecide =
+    alert?.status === 'open' && !reasonTooShort && !review.isPending
+
+  async function decide(decision: 'approve' | 'reject') {
     if (!alert || !canDecide) return
-    showSubmittedData(
-      { decision, reason: reason.trim() },
-      'Quyết định gửi lên API (demo, chưa gọi backend):'
-    )
-    onDecision(alert.id, decision)
-    setReason('')
-    onOpenChange(false)
+    const trimmed = reason.trim()
+    const fingerprint = `${alert.transaction_id}:${decision}:${trimmed}`
+    let key = keys.current.get(fingerprint)
+    if (!key) {
+      key = newIdempotencyKey()
+      keys.current.set(fingerprint, key)
+    }
+
+    try {
+      const updated = await review.mutateAsync({
+        transactionId: alert.transaction_id,
+        decision,
+        reason: trimmed,
+        idempotencyKey: key,
+      })
+      toast.success(
+        `Lệnh chuyển sang: ${transactionStatusLabels[updated.status]}`
+      )
+      setReason('')
+      onOpenChange(false)
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? (ERROR_MESSAGES[error.code] ?? `${error.code}: ${error.message}`)
+          : 'Không gọi được API. Kiểm tra backend đang chạy.'
+      toast.error(message)
+    }
   }
 
   return (
@@ -195,7 +239,8 @@ export function AlertReviewSheet({
                   </div>
                 ) : (
                   <p className='text-muted-foreground text-sm'>
-                    Không tìm thấy giao dịch trong dữ liệu demo.
+                    Giao dịch không nằm trong trang lệnh hiện tại; mã lệnh:{' '}
+                    <span className='font-mono'>{alert.transaction_id}</span>
                   </p>
                 )}
               </div>
@@ -228,8 +273,9 @@ export function AlertReviewSheet({
                     : 'Cảnh báo đã được xử lý, chỉ xem lại bằng chứng.'}
                 </p>
                 <p className='text-muted-foreground text-xs'>
-                  Người tạo lệnh không được tự duyệt lệnh của mình; máy chủ kiểm
-                  tra lại quyền, số dư và trạng thái tài khoản tại lúc ghi sổ.
+                  Máy chủ kiểm tra lại quyền, số dư và trạng thái tài khoản tại
+                  lúc ghi sổ, và từ chối nếu người quyết định chính là người tạo
+                  lệnh.
                 </p>
               </div>
             </div>
@@ -243,7 +289,7 @@ export function AlertReviewSheet({
                 Từ chối
               </Button>
               <Button disabled={!canDecide} onClick={() => decide('approve')}>
-                Duyệt và ghi sổ
+                {review.isPending ? 'Đang gửi...' : 'Duyệt và ghi sổ'}
               </Button>
             </SheetFooter>
           </>
