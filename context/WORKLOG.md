@@ -32,3 +32,11 @@
 - Owner delegated remaining planning choices. Fixed frontend/backend stack, contract/mock tooling, auth/roles, fraud thresholds/location policy, reservations and review semantics in plan section 12.
 - Updated frontend/backend orientation notes and shared context. No runtime packages installed; implementation/technical design checkpoint remains pending.
 - Verified documentation links, decision consistency and whitespace; runtime tests are not applicable to this documentation change.
+
+## 2026-11-02 — Obsidian vault settings
+
+- Committed Obsidian's own object format for `.obsidian/core-plugins.json` so opening the vault no longer leaves the tree dirty.
+- Enabled the command palette core plugin; added `attachments/` with a short README to match `attachmentFolderPath`.
+- Verified the shared settings files parse as JSON and that ignored personal state (workspace, appearance, hotkeys, plugins) stays untracked.
+- Next: banking webapp step 2 still waits for owner review.
+
