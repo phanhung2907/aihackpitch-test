@@ -40,3 +40,8 @@ __pycache__/
 .coverage
 coverage.xml
 htmlcov/
+
+backend/coverage.json
+backend/requirements-audit.txt
+
+backend/backups/

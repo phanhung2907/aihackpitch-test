@@ -1,0 +1,52 @@
+name: Backend quality gates
+on:
+  push:
+    paths: ["backend/**", "contracts/**", "compose.yaml", ".github/workflows/backend.yml"]
+  pull_request:
+    paths: ["backend/**", "contracts/**", "compose.yaml", ".github/workflows/backend.yml"]
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-bookworm@sha256:839fbb5a4942a7758dd93e18b42ea5649807491a0545b5eeeb8f0b8bb11857a5
+        env:
+          POSTGRES_USER: bank_owner
+          POSTGRES_DB: banking_test
+          # Disposable CI service only; these are not credentials for a shared environment.
+          POSTGRES_PASSWORD: ci-only-owner-password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U bank_owner -d banking_test"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+    env:
+      APP_ENV: development
+      APP_SECRET: ci-only-signing-secret-at-least-32-characters
+      BANK_APP_PASSWORD: ci-only-runtime-password-32-characters
+      DEMO_PASSWORD: ci-only-demo-password
+      ALLOWED_ORIGINS: http://testserver
+      DATABASE_URL: postgresql+psycopg://bank_app:ci-only-runtime-password-32-characters@localhost:5432/banking_test
+      MIGRATION_DATABASE_URL: postgresql+psycopg://bank_owner:ci-only-owner-password@localhost:5432/banking_test
+      TEST_DATABASE_URL: postgresql+psycopg://bank_app:ci-only-runtime-password-32-characters@localhost:5432/banking_test
+      TEST_MIGRATION_DATABASE_URL: postgresql+psycopg://bank_owner:ci-only-owner-password@localhost:5432/banking_test
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.13"
+      - run: uv sync --frozen --python 3.13
+      - run: uv run ruff check banking tests migrations
+      - run: uv run ruff format --check banking tests migrations
+      - run: uv run mypy banking
+      - run: uv run pytest --cov=banking --cov-report=term-missing --cov-report=json --cov-fail-under=80
+      - run: uv run python scripts/check_core_coverage.py
+      - run: uv export --frozen --no-dev --no-hashes --format requirements-txt --output-file /tmp/banking-runtime.txt
+      - run: uv run pip-audit -r /tmp/banking-runtime.txt --no-deps --disable-pip
+      - run: docker build -f backend/Dockerfile .
+        working-directory: .

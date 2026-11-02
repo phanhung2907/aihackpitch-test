@@ -1,11 +1,11 @@
 # Mô hình dữ liệu PostgreSQL
 
-Thiết kế logic, chưa phải migration chạy được. UUID primary keys; timestamps timestamptz; money BIGINT; amounts trong command >0. FK mặc định RESTRICT; không cascade-delete dữ liệu tài chính. Tên dưới đây là tên chuẩn dùng trong code/contract mapping.
+Thiết kế logic; migrations chạy được nằm trong backend/migrations (001–004). UUID primary keys; timestamps timestamptz; money BIGINT; amounts trong command >0. FK mặc định RESTRICT; không cascade-delete dữ liệu tài chính. Tên dưới đây là tên chuẩn dùng trong code/contract mapping.
 
 | Bảng | Trường chính và ràng buộc |
 | --- | --- |
 | users | id, login unique normalized, password_hash, role enum, customer_id nullable unique, branch_id nullable, enabled, version; role customer phải có customer_id; teller phải có branch_id |
-| sessions | id, token_hash unique, user_id FK, csrf_token_hash, created_at, expires_at, revoked_at; raw CSRF lưu encrypted hoặc derived HMAC theo session ID để GET session tái tạo mà không lưu plaintext |
+| sessions | id, token_hash unique, user_id FK, created_at, expires_at, revoked_at; CSRF được derive HMAC theo session ID và APP_SECRET để GET session tái tạo, không lưu plaintext/hash CSRF trong bảng |
 | login_throttles | key_hash PK (login+IP), window_started_at, failure_count, blocked_until; atomic increments |
 | branches | id, code unique, name, latitude, longitude, active, version; valid paired coordinates |
 | customers | id, full_name, email normalized unique, phone, status active/archived, version, created_at |

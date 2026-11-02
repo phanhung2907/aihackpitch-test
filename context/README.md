@@ -14,3 +14,5 @@ Keep notes concise and evidence-backed. Store important context in these tracked
 Banking project: [detailed plan and approval checkpoints](../plans/banking-webapp-plan.md).
 
 Backend: [system and feature design index](../backend/design/README.md) · [A-to-Z product flow](../backend/design/product-flow.md).
+
+Backend runtime: [run instructions](../backend/README.md) · [implementation/test report](../backend/implementation-report.md).

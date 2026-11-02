@@ -1,0 +1,82 @@
+services:
+  postgres:
+    image: postgres:17-bookworm@sha256:839fbb5a4942a7758dd93e18b42ea5649807491a0545b5eeeb8f0b8bb11857a5
+    environment:
+      POSTGRES_USER: bank_owner
+      POSTGRES_DB: banking_dev
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+    - 127.0.0.1:55432:5432
+    volumes:
+    - banking-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U bank_owner -d banking_dev
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  postgres-test:
+    image: postgres:17-bookworm@sha256:839fbb5a4942a7758dd93e18b42ea5649807491a0545b5eeeb8f0b8bb11857a5
+    profiles:
+    - test
+    environment:
+      POSTGRES_USER: bank_owner
+      POSTGRES_DB: banking_test
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+    - 127.0.0.1:55433:5432
+    tmpfs:
+    - /var/lib/postgresql/data
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U bank_owner -d banking_test
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    profiles:
+    - app
+    env_file: .env
+    environment:
+      MIGRATION_DATABASE_URL: postgresql+psycopg://bank_owner:${POSTGRES_PASSWORD}@postgres:5432/banking_dev
+      DATABASE_URL: postgresql+psycopg://bank_app:${BANK_APP_PASSWORD}@postgres:5432/banking_dev
+    command:
+    - python
+    - -m
+    - banking.manage
+    - migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    profiles:
+    - app
+    environment:
+      DATABASE_URL: postgresql+psycopg://bank_app:${BANK_APP_PASSWORD}@postgres:5432/banking_dev
+      APP_SECRET: ${APP_SECRET:?Set APP_SECRET}
+      APP_ENV: ${APP_ENV:-development}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS}
+    ports:
+    - 127.0.0.1:8000:8000
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/ready')
+      interval: 5s
+      timeout: 3s
+      retries: 12
+volumes:
+  banking-data: null

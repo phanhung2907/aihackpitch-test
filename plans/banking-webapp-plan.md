@@ -1,6 +1,6 @@
 # Kế hoạch xây dựng banking webapp và phát hiện gian lận
 
-Ngày: 2026-11-02 (Asia/Bangkok). Trạng thái: BƯỚC 1 — CHỜ CHỦ REPO DUYỆT.
+Ngày: 2026-11-02 (Asia/Bangkok). Trạng thái: backend đã được thiết kế và triển khai/kiểm thử theo ủy quyền mới; frontend chưa triển khai.
 
 ## 1. Mục tiêu và phạm vi
 
@@ -255,3 +255,5 @@ Core money/fraud modules đạt line và branch coverage >= 80%, cộng toàn b�
 Các lựa chọn kiến trúc/nghiệp vụ là quyết định của dự án; tài liệu thư viện chứng minh khả năng của công cụ, không thay thế kiểm thử tương thích stack khi bootstrap.
 
 Thiết kế backend theo yêu cầu mới được tập trung tại [backend/design](../backend/design/README.md), thay vị trí docs/ dự kiến ban đầu. Hợp đồng canonical vẫn ở contracts/openapi.yaml để frontend/backend dùng chung.
+
+Checkpoint backend 2026-11-03: chủ repo yêu cầu triển khai code rồi kiểm thử từng chức năng và hệ thống. Backend đã có runtime Docker và 61 tests đạt; frontend lane còn pending, không coi roadmap cả sản phẩm đã hoàn tất. Xem [implementation report](../backend/implementation-report.md).

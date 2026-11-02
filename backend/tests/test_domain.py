@@ -17,10 +17,24 @@ def test_money_exact():
 
 
 def command(amount, seconds=0, location=(21.0285, 105.8542), sequence=1):
-    return {"id": "candidate", "amount": amount, "received_at": datetime(2026, 11, 3, tzinfo=UTC) + timedelta(seconds=seconds), "latitude": location[0] if location else None, "longitude": location[1] if location else None, "location_source": "demo_client", "account_sequence": sequence}
+    return {
+        "id": "candidate",
+        "amount": amount,
+        "received_at": datetime(2026, 11, 3, tzinfo=UTC) + timedelta(seconds=seconds),
+        "latitude": location[0] if location else None,
+        "longitude": location[1] if location else None,
+        "location_source": "demo_client",
+        "account_sequence": sequence,
+    }
 
 
-RULES = {"version": 1, "high_amount_vnd": 1000000000, "distance_km": 500, "rapid_amount_vnd": 500000000, "rapid_seconds": 30}
+RULES = {
+    "version": 1,
+    "high_amount_vnd": 1000000000,
+    "distance_km": 500,
+    "rapid_amount_vnd": 500000000,
+    "rapid_seconds": 30,
+}
 
 
 @pytest.mark.parametrize("amount,expected", [(1000000000, False), (1000000001, True)])
@@ -29,7 +43,9 @@ def test_high_amount(amount, expected):
     assert ("HIGH_AMOUNT" in results["reasons"]) is expected
 
 
-@pytest.mark.parametrize("seconds,expected", [(29.999, True), (30, True), (30.001, False), (-20, True)])
+@pytest.mark.parametrize(
+    "seconds,expected", [(29.999, True), (30, True), (30.001, False), (-20, True)]
+)
 def test_rapid_boundary_and_out_of_order(seconds, expected):
     result = assess_fraud(command(500000001, seconds), [command(500000001)], RULES)
     assert ("RAPID_LARGE_TRANSACTIONS" in result["reasons"]) is expected
@@ -42,12 +58,29 @@ def test_exact_500_million_is_clear():
 def test_distant_and_missing_location():
     assert distance_km((21.0285, 105.8542), (10.8231, 106.6297)) > 500
     assert distance_km((0, 0), (0, 0)) == 0
-    assert "DISTANT_LOCATIONS" in assess_fraud(command(1, location=(10.8231, 106.6297)), [command(1)], RULES)["reasons"]
+    assert (
+        "DISTANT_LOCATIONS"
+        in assess_fraud(command(1, location=(10.8231, 106.6297)), [command(1)], RULES)["reasons"]
+    )
     assert "LOCATION_UNAVAILABLE" in assess_fraud(command(1, location=None), [], RULES)["reasons"]
-    assert "LOCATION_UNAVAILABLE" in assess_fraud(command(1), [command(1, location=None)], RULES)["reasons"]
+    assert (
+        "LOCATION_UNAVAILABLE"
+        in assess_fraud(command(1), [command(1, location=None)], RULES)["reasons"]
+    )
 
 
 def test_first_command_and_multiple_rules():
     assert not assess_fraud(command(1), [], RULES)["reasons"]
     result = assess_fraud(command(1000000001, 1, (10.8231, 106.6297)), [command(600000000)], RULES)
-    assert set(result["reasons"]) == {"HIGH_AMOUNT", "DISTANT_LOCATIONS", "RAPID_LARGE_TRANSACTIONS"}
+    assert set(result["reasons"]) == {
+        "HIGH_AMOUNT",
+        "DISTANT_LOCATIONS",
+        "RAPID_LARGE_TRANSACTIONS",
+    }
+
+
+@pytest.mark.parametrize("distance,expected", [(499.999, False), (500, False), (500.0001, True)])
+def test_distance_threshold_without_rounding(monkeypatch, distance, expected):
+    monkeypatch.setattr("banking.domain.distance_km", lambda a, b: distance)
+    result = assess_fraud(command(1), [command(1)], RULES)
+    assert ("DISTANT_LOCATIONS" in result["reasons"]) is expected

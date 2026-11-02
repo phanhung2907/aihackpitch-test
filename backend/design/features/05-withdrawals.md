@@ -26,4 +26,4 @@ Reserve và lệnh commit nguyên tử. available=posted-reserved, mọi concurr
 
 WDR-01 amount biên; WDR-02 hai rút vượt available; WDR-03 hold/reserve; WDR-04 approve consume/reject release; WDR-05 retry không double-reserve.
 
-Chưa có code chạy ở checkpoint thiết kế. Test IDs là yêu cầu triển khai, không phải test đã pass.
+Backend đã được triển khai; xem [implementation report](../../implementation-report.md) và tests trong backend/tests để biết bằng chứng runtime. Test IDs ở trên là traceability, không tự đại diện một pytest test cho từng ID.

@@ -59,7 +59,7 @@ Lock timeout 3s, statement timeout 10s, request timeout proxy 20s cho local MVP;
 
 ## 6. Bảo mật và auth boundary
 
-Session 256-bit random opaque; cookie token chỉ gửi browser, DB lưu SHA-256 hash. Session sống tối đa 8 giờ; login mới rotate, logout/disable/change role revoke. User role không lấy từ cookie. CSRF random token gắn session, frontend lấy qua GET session; mutation so sánh header X-CSRF-Token constant time và Origin exact. Login yêu cầu Origin hợp lệ và JSON, không dùng session cũ để elevate.
+Session 256-bit random opaque; cookie token chỉ gửi browser, DB lưu SHA-256 hash. Session sống tối đa 8 giờ; login mới rotate, logout/disable/change role revoke. User role không lấy từ cookie. CSRF HMAC token gắn session, frontend lấy qua GET session; mutation so sánh header X-CSRF-Token constant time và Origin exact. Login yêu cầu Origin hợp lệ và JSON, không dùng session cũ để elevate.
 
 Mật khẩu Argon2id, parameters benchmark ở bootstrap; login thất bại generic. Throttle trên hash normalized login + source IP: 5 thất bại/15 phút, 429 + Retry-After; record counter atomic trong transaction riêng để thất bại login không rollback counter. Fake hash cho user không có để giảm user enumeration; không log login plaintext. Trust forwarded IP chỉ từ Nginx đã allowlist.
 
@@ -67,6 +67,8 @@ Auth endpoint commit session trước Set-Cookie. Các endpoint nhận session k
 
 ## 7. Tổ chức backend dự kiến
 
-`app/api/v1`, `app/schemas`, `app/application`, `app/domain/{money,fraud}`, `app/infrastructure/{db,repositories}`, `app/core/{config,security,observability}`, `migrations`, `tests/{unit,integration,contract}`. Router mỏng, service nhận UnitOfWork/clock/rule config. Không import frontend vào backend. Canonical OpenAPI nằm tại repo `contracts/openapi.yaml`, chưa có route chạy thật trong bước này.
+`app/api/v1`, `app/schemas`, `app/application`, `app/domain/{money,fraud}`, `app/infrastructure/{db,repositories}`, `app/core/{config,security,observability}`, `migrations`, `tests/{unit,integration,contract}`. Router mỏng, service nhận UnitOfWork/clock/rule config. Không import frontend vào backend. Canonical OpenAPI nằm tại repo `contracts/openapi.yaml`, route đã chạy; xem implementation report cho kiểm chứng.
 
 Posting function là SECURITY DEFINER có owner riêng, search_path cố định và tên bảng fully-qualified; runtime chỉ được EXECUTE interface hẹp. Không nhận journal entries tùy ý từ API. Các row locks và constraint triggers phải được integration test bằng runtime role, không chỉ bằng superuser.
+
+Implementation sử dụng validators JSON Schema từ canonical OpenAPI thay DTO request/response Pydantic viết tay. Contract conformance được kiểm bằng runtime validators và inventory route; không tuyên bố so sánh với một generated spec độc lập.

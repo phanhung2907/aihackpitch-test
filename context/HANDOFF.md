@@ -2,13 +2,13 @@
 
 Updated: 2026-11-03 (Asia/Bangkok).
 
-## Completed checkpoint — backend design
+## Completed checkpoint — backend implementation and testing
 
-Owner authorized overall backend design, feature designs and one consistent beginner-friendly Mermaid product flow. See [backend design index](../backend/design/README.md), [product flow](../backend/design/product-flow.md) and [API contract](../contracts/README.md).
+Owner authorized implementation, feature testing, then backend system testing. Backend is now runnable in Docker: [run instructions](../backend/README.md), [implementation report](../backend/implementation-report.md).
 
-Delivered system/technical/data designs, 12 feature documents, Mermaid source + SVG, 39 OpenAPI operations/36 schemas, six examples and 30 acceptance scenarios. No application, migration, frontend generation or hosted CI has run.
+Implemented 41 canonical API operations, auth/roles/CRUD, money/ledger/reservations/idempotency, fraud rules/review/reversal, history/dashboard/admin, Alembic 001–004 and CI gates. Local full suite: 61 passing tests; total coverage 90.29%, domain lines/branches 100%, money lines 93.4% and branches 81.2%. Runtime role cannot rewrite ledger/balances/command amount. Docker HTTP smoke and isolated backup/restore passed. Frontend is still pending.
 
-Important refinement: rapid fraud uses absolute server-received time difference <=30s among serialized candidates, so lock-order inversion cannot miss the pair. Immutable signed-delta double-entry journals and debit-only reservations are described in technical design. Plan locations reconciled to backend/design instead of the initial docs/ proposal.
+TDD RED checkpoint is 1b595fb. Contract gained missing PATCH users/branches, listBranches spelling normalized, same-origin server URL. Frontend must use the current spec, not the old 39-operation design snapshot. Runtime validates canonical JSON Schema directly, not handwritten Pydantic DTOs or a separate generated spec. Details/tradeoffs recorded in implementation report.
 
 ## Obsidian vault
 
@@ -24,8 +24,8 @@ The repository root is the Obsidian vault (`Open folder as vault`). Shared setti
 
 ## Verification
 
-OpenAPI spec and six example schema validations pass. Mermaid rendered to SVG/PNG and visually reviewed, then simplified for readability. Local links, Mermaid source/embedded block synchronization, and whitespace are checked at closeout. Runtime scenarios are future acceptance criteria, not executed tests.
+Local unit/feature/contract/system suite, Ruff/format/mypy, runtime dependency audit, Docker startup/health, HTTP HOLD/reject/history and isolated restore reconciliation passed. Check implementation report for exact counts and commands. Hosted CI is separate; verify the actual GitHub run after publication. Demo config/credentials, .venv, coverage output and backup dumps stay ignored.
 
 ## Next action
 
-STOP for owner review before bootstrap or implementation. After design/contract approval, follow plan step 3, lock compatible package patches and establish runtime/CI commands. Frontend/backend then share the canonical contract and mock scenarios. ECC remains local-only and ignored by Git.
+STOP for owner review of backend. Do not begin frontend automatically. Backend Docker API is at http://localhost:8000/docs while the local stack runs. After review, implement frontend against generated OpenAPI types and MSW, then browser E2E/integration. Production is not deployed. Preserve concurrent UI shortlist/Obsidian/graph notes and local-only ECC.

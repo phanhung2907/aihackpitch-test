@@ -26,4 +26,4 @@ Read replicas/cache chưa có; filters áp trước pagination và aggregates. L
 
 HIS-01 filters/cursor; HIS-02 IDOR cả list/detail/aggregate; HIS-03 pending không counted posted; HIS-04 đảo không double count; HIS-05 PII/evidence redaction.
 
-Chưa có code chạy ở checkpoint thiết kế. Test IDs là yêu cầu triển khai, không phải test đã pass.
+Backend đã được triển khai; xem [implementation report](../../implementation-report.md) và tests trong backend/tests để biết bằng chứng runtime. Test IDs ở trên là traceability, không tự đại diện một pytest test cho từng ID.

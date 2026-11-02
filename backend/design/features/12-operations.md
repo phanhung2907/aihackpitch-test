@@ -26,4 +26,4 @@ Compose volume không bị xóa bởi scripts reset ngầm. Không chạy docker
 
 OPS-01 fresh migrate; OPS-02 restart giữ tiền; OPS-03 backup/restore reconcile; OPS-04 missing env fail; OPS-05 DB down ready503; OPS-06 CI không dùng secret thật.
 
-Chưa có code chạy ở checkpoint thiết kế. Test IDs là yêu cầu triển khai, không phải test đã pass.
+Backend đã được triển khai; xem [implementation report](../../implementation-report.md) và tests trong backend/tests để biết bằng chứng runtime. Test IDs ở trên là traceability, không tự đại diện một pytest test cho từng ID.

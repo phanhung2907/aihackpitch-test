@@ -26,4 +26,4 @@ unique partial original where pending/posted; original_journal_id unique trên j
 
 RVS-01 đảo từng loại; RVS-02 chỉ một reversal posted; RVS-03 thiếu tiền không âm; RVS-04 race với spend; RVS-05 không sửa journal gốc; RVS-06 self-review chặn.
 
-Chưa có code chạy ở checkpoint thiết kế. Test IDs là yêu cầu triển khai, không phải test đã pass.
+Backend đã được triển khai; xem [implementation report](../../implementation-report.md) và tests trong backend/tests để biết bằng chứng runtime. Test IDs ở trên là traceability, không tự đại diện một pytest test cho từng ID.

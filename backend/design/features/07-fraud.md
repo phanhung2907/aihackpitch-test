@@ -26,4 +26,4 @@ Evaluation immutable snapshot gồm candidate IDs/sequence, tiền, thời gian,
 
 FRD-01 1 tỷ/1 tỷ+1; FRD-02 500 triệu/500 triệu+1; FRD-03 29.999/30/30.001s; FRD-04 exactly500km; FRD-05 first/missing/invalid; FRD-06 out-of-order/concurrent; FRD-07 nhiều rule một alert.
 
-Chưa có code chạy ở checkpoint thiết kế. Test IDs là yêu cầu triển khai, không phải test đã pass.
+Backend đã được triển khai; xem [implementation report](../../implementation-report.md) và tests trong backend/tests để biết bằng chứng runtime. Test IDs ở trên là traceability, không tự đại diện một pytest test cho từng ID.

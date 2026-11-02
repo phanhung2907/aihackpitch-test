@@ -26,4 +26,4 @@ Customer rows sorted trước accounts sorted; update hai balance/journal trong 
 
 TRF-01 atomicity; TRF-02 A→B và B→A đồng thời; TRF-03 IDOR; TRF-04 held recipient không tăng tiền; TRF-05 overflow; TRF-06 inbound không gây false distant.
 
-Chưa có code chạy ở checkpoint thiết kế. Test IDs là yêu cầu triển khai, không phải test đã pass.
+Backend đã được triển khai; xem [implementation report](../../implementation-report.md) và tests trong backend/tests để biết bằng chứng runtime. Test IDs ở trên là traceability, không tự đại diện một pytest test cho từng ID.

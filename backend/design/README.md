@@ -1,6 +1,6 @@
 # Thiết kế backend — Banking webapp
 
-Trạng thái: thiết kế để chủ repo kiểm tra; chưa triển khai ứng dụng. Nguồn yêu cầu: [kế hoạch](../../plans/banking-webapp-plan.md), đặc biệt mục 12.
+Trạng thái: thiết kế nền cho backend đã triển khai. Xem [kết quả implementation/testing](../implementation-report.md); frontend chưa triển khai. Nguồn yêu cầu: [kế hoạch](../../plans/banking-webapp-plan.md), đặc biệt mục 12.
 
 ## Đọc theo thứ tự
 

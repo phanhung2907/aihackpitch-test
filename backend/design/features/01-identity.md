@@ -26,4 +26,4 @@ sessions, users, login_throttles; login failure counters trong transaction độ
 
 AUTH-01 đúng/sai password; AUTH-02 role/ownership 403/404; AUTH-03 hết hạn/revoke/rotate; AUTH-04 CSRF; AUTH-05 throttle concurrent; AUTH-06 không log secret.
 
-Chưa có code chạy ở checkpoint thiết kế. Test IDs là yêu cầu triển khai, không phải test đã pass.
+Backend đã được triển khai; xem [implementation report](../../implementation-report.md) và tests trong backend/tests để biết bằng chứng runtime. Test IDs ở trên là traceability, không tự đại diện một pytest test cho từng ID.

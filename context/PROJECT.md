@@ -4,7 +4,7 @@ Last updated: 2026-11-03 (Asia/Bangkok).
 
 ## Confirmed scope
 
-The owner wants a banking webapp with customer/account CRUD, deposits, withdrawals, and fraud detection. Required backend: Python/FastAPI; database: PostgreSQL in Docker. Keep `frontend/` and `backend/` separate. Plan shared API contracts and mock data so frontend and backend can develop in parallel and integrate later. Fraud scenarios: amount above VND 1 billion; consecutive transactions at distant locations; two transactions each above VND 500 million within 30 seconds. Distance >500 km and HOLD/review are now decided; detailed tech and business policies are in section 12 of the plan. Frontend: React/TypeScript/Vite, Tailwind/shadcn, React Router, TanStack Query, MSW and generated OpenAPI types. Finish, commit/push, and stop for owner review after each step. Owner authorized backend design. System/technical/data and 12 feature designs are in backend/design; shared OpenAPI is in contracts/openapi.yaml. Awaiting review before bootstrap.
+The owner wants a banking webapp with customer/account CRUD, deposits, withdrawals, and fraud detection. Required backend: Python/FastAPI; database: PostgreSQL in Docker. Keep `frontend/` and `backend/` separate. Plan shared API contracts and mock data so frontend and backend can develop in parallel and integrate later. Fraud scenarios: amount above VND 1 billion; consecutive transactions at distant locations; two transactions each above VND 500 million within 30 seconds. Distance >500 km and HOLD/review are now decided; detailed tech and business policies are in section 12 of the plan. Frontend: React/TypeScript/Vite, Tailwind/shadcn, React Router, TanStack Query, MSW and generated OpenAPI types. Finish, commit/push, and stop for owner review after each step. Owner authorized backend design. System/technical/data and 12 feature designs are in backend/design; shared OpenAPI is in contracts/openapi.yaml. Backend is now implemented/tested (61 passing tests, 90.29% coverage); frontend remains pending owner review.
 
 ## Repository
 
@@ -24,4 +24,4 @@ The owner wants a banking webapp with customer/account CRUD, deposits, withdrawa
 
 ## Verification and deployment
 
-No application build, test runner, hosted CI pipeline, or deployment target is configured yet. Validate Markdown links, JSON settings, and Git changes for this setup. Add appropriate CI/CD when the application stack is established.
+Backend runs with Docker/PostgreSQL and uv/pytest; 61 local tests pass and the GitHub Actions backend workflow is configured. Verify hosted CI independently. Local Docker is the current target; no frontend or production deployment yet.

@@ -26,4 +26,4 @@ customers SHARE rồi accounts UPDATE; freeze/close và post dùng cùng row loc
 
 ACC-01 open/read/label; ACC-02 freeze race với post; ACC-03 close balance/reserve/pending; ACC-04 closed không reopen; ACC-05 ownership.
 
-Chưa có code chạy ở checkpoint thiết kế. Test IDs là yêu cầu triển khai, không phải test đã pass.
+Backend đã được triển khai; xem [implementation report](../../implementation-report.md) và tests trong backend/tests để biết bằng chứng runtime. Test IDs ở trên là traceability, không tự đại diện một pytest test cho từng ID.

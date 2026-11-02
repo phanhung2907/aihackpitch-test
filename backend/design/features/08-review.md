@@ -26,4 +26,4 @@ Một UoW review_action/alert/command/ledger/reserve/audit/idempotency. Failure 
 
 REV-01 approve/reject; REV-02 analyst race; REV-03 actor self-review; REV-04 frozen approve vẫn hold; REV-05 reject frozen release; REV-06 audit/journal failure rollback.
 
-Chưa có code chạy ở checkpoint thiết kế. Test IDs là yêu cầu triển khai, không phải test đã pass.
+Backend đã được triển khai; xem [implementation report](../../implementation-report.md) và tests trong backend/tests để biết bằng chứng runtime. Test IDs ở trên là traceability, không tự đại diện một pytest test cho từng ID.

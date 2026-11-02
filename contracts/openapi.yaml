@@ -6,8 +6,8 @@ info:
     Money is digit-string VND; UTC timestamps. All authenticated mutations require exact Origin and session-bound X-CSRF-Token.
     Role list does not override resource ownership.
 servers:
-- url: http://localhost:8080
-  description: Local full-stack demo; /api/v1 is included in paths.
+- url: /
+  description: Same origin; paths already include /api/v1. Works through Vite/Nginx or standalone backend docs.
 paths:
   /api/v1/auth/login:
     post:
@@ -2946,10 +2946,104 @@ paths:
         schema:
           type: string
           format: uuid
+    patch:
+      operationId: updateUser
+      summary: updateUser
+      tags:
+      - users
+      x-roles:
+      - admin
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPatch'
   /api/v1/branches:
     get:
-      operationId: listBranchs
-      summary: listBranchs
+      operationId: listBranches
+      summary: listBranches
       tags:
       - branches
       x-roles:
@@ -3230,6 +3324,100 @@ paths:
         schema:
           type: string
           format: uuid
+    patch:
+      operationId: updateBranch
+      summary: updateBranch
+      tags:
+      - branches
+      x-roles:
+      - admin
+      security:
+      - sessionCookie: []
+      responses:
+        '200':
+          description: Thành công. Lệnh tiền có thể đang chờ duyệt; đọc status trước khi hiển thị đã ghi sổ.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Branch'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Không đủ quyền hoặc CSRF/Origin sai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tồn tại/ngoài phạm vi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict/số dư/trạng thái/key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Input không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: Lỗi ngoài dự kiến
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Lỗi tạm thời, rollback nếu chưa commit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: branch_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BranchPatch'
   /api/v1/fraud-rule-versions:
     get:
       operationId: listRuleVersions

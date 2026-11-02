@@ -65,3 +65,14 @@
 
 
 - Publication integration: preserved three concurrent remote commits (Obsidian settings, UI shortlist and ignored knowledge graph); resolved the shared work-log conflict by retaining both histories.
+
+## 2026-11-03 — Backend implementation and feature/system tests
+
+- Implemented FastAPI backend, PostgreSQL migrations/functions/constraints, sessions/CSRF/roles, CRUD, money operations, fraud HOLD/review/reversal, queries/admin and Docker setup.
+- TDD RED checkpoint 1b595fb; GREEN domain/feature/system coverage recorded in backend/implementation-report.md.
+- Full suite: 61 PASS; coverage 90.29%; core money branches 81.2%, domain 100%. Ruff, format and mypy pass; runtime package audit found no known vulnerabilities.
+- Docker startup and real HTTP smoke passed; backup restored into a new isolated database and ledger/reservations reconciled. Private .env and backup artifacts remain ignored.
+- Canonical contract now has 41 operations (added missing admin PATCHs, normalized listBranches and relative server). Added GitHub Actions backend quality gates; hosted status must be checked separately.
+- Next: owner review before frontend/MSW work and browser-level E2E. No production deployment.
+
+- Owner requested stopping extensive testing: keep existing unit/integration evidence. Fixed Swagger cache/version behavior with an explicit canonical OpenAPI override; added a pure contract regression. No further deep test cycles planned.

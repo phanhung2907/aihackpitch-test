@@ -26,4 +26,4 @@ Một UoW cho command/evaluation/journal-or-alert/audit/idempotency. Customer fu
 
 DEP-01 allow balanced journal; DEP-02 >1 tỷ hold không credit; DEP-03 branch location; DEP-04 idempotent; DEP-05 exception giữa các insert rollback.
 
-Chưa có code chạy ở checkpoint thiết kế. Test IDs là yêu cầu triển khai, không phải test đã pass.
+Backend đã được triển khai; xem [implementation report](../../implementation-report.md) và tests trong backend/tests để biết bằng chứng runtime. Test IDs ở trên là traceability, không tự đại diện một pytest test cho từng ID.

@@ -26,4 +26,4 @@ Admin mutations lock user rows sorted và singleton admin_guard để serialize 
 
 ADM-01 role escalation; ADM-02 last-admin concurrent; ADM-03 disable session revoke; ADM-04 immutable rule/evidence; ADM-05 branch location không bị client giả.
 
-Chưa có code chạy ở checkpoint thiết kế. Test IDs là yêu cầu triển khai, không phải test đã pass.
+Backend đã được triển khai; xem [implementation report](../../implementation-report.md) và tests trong backend/tests để biết bằng chứng runtime. Test IDs ở trên là traceability, không tự đại diện một pytest test cho từng ID.
