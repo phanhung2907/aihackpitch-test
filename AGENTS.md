@@ -5,7 +5,11 @@
 1. Read [the context index](context/README.md), [project facts](context/PROJECT.md), and [the latest handoff](context/HANDOFF.md). Read relevant entries in [the work log](context/WORKLOG.md).
 2. Inspect Git status, the current branch, and the actual source/configuration before editing. Notes are a handoff, not proof that code or remote state is unchanged.
 3. Preserve other agents' and the user's changes. If agents work concurrently, use separate worktrees/branches and task-specific notes; do not stage or commit another agent's work.
-4. Follow the personal ECC engineering workflow when available. Other agents can follow these repo instructions without needing the author's local ECC installation.
+4. Use the locally installed ECC skills in `.agents/skills/` first. Read only skills relevant to the task: `git-workflow`, `tdd-workflow`, `verification-loop`, `security-review`, and `deployment-patterns` cover the core engineering workflow. ECC files are local-only and ignored by Git. On other machines, install ECC separately or follow this file's portable workflow. Adapt Claude-specific tool names and examples to the actual host; do not assume upstream repository scripts are installed.
+
+## Current owner checkpoint policy
+
+For the banking webapp project, finish one approved step, validate it, commit and push, then stop and report for the owner's review. Do not begin the next step until the owner approves. Frontend and backend implementation may proceed in parallel only after the detailed plan and shared API contract have been approved. Keep implementation in separate `frontend/` and `backend/` folders.
 
 ## Engineering workflow
 

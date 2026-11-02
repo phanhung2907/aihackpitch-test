@@ -4,7 +4,7 @@ Last updated: 2026-11-02 (Asia/Bangkok).
 
 ## Confirmed scope
 
-The owner wants multiple agents to share context through an Obsidian vault in this repository and to commit/push after each completed task. Application requirements, stack, and deployment destination are not yet specified.
+The owner wants a banking webapp with customer/account CRUD, deposits, withdrawals, and fraud detection. Required backend: Python/FastAPI; database: PostgreSQL in Docker. Keep `frontend/` and `backend/` separate. Plan shared API contracts and mock data so frontend and backend can develop in parallel and integrate later. Fraud scenarios: amount above VND 1 billion; consecutive transactions at distant locations; two transactions each above VND 500 million within 30 seconds. Exact geographic thresholds and response policy await planning review. Finish, commit/push, and stop for owner review after each step. Current priority: install ECC skills in this repo before planning.
 
 ## Repository
 
@@ -18,7 +18,7 @@ The owner wants multiple agents to share context through an Obsidian vault in th
 
 - Setup machine: Windows, PowerShell; working folder `E:\aihackpitch-test`.
 - Time zone for handoff dates: Asia/Bangkok.
-- 314 ECC skills were installed in the owner's local `C:\Users\HungPhan\.codex\skills` directory. This local installation is not part of the repository and is not assumed on other machines.
+- 314 ECC skills are installed locally in `.agents/skills/` and the owner's personal skill directory. ECC installation files are ignored by Git and are not published; other machines need their own installation.
 - Personal ECC workflow is in `C:\Users\HungPhan\.codex\AGENTS.md`; portable repo behavior is in [the root agent instructions](../AGENTS.md).
 - Vault location: repository root. No community plugins are needed.
 

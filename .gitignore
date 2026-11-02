@@ -21,3 +21,9 @@ Desktop.ini
 *.tmp
 *.swp
 ~$*
+
+# Local ECC installation (keep off GitHub)
+/.agents/skills/
+/.agents/ECC-LICENSE
+/.agents/ecc-installation.json
+/.agents/README.md
