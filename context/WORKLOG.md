@@ -47,3 +47,11 @@
 - No template was cloned, installed or built, so no build or test evidence exists for them. Flagged license attribution and contest-rule risk.
 - Next: owner decides which template becomes the `frontend/` base; banking step 2 still waits for review.
 
+## 2026-11-03 — Knowledge graph of the repository notes
+
+- Ran the graphify pipeline over the 11 Markdown files (~6,797 words); no code files exist yet, so extraction was semantic only.
+- Result: 73 nodes, 124 edges, 8 communities (fraud rules, contract-first lanes, shared context, security/roles, ledger invariants, Git closeout, decided stack, Obsidian vault).
+- Outputs went to the ignored `graphify-out/` folder; the integrity check flagged three collapsed undirected edges and one AMBIGUOUS edge.
+- Cost for the run: 127,542 subagent tokens, with no input/output split reported by the host.
+- Next: rebuild with `graphify --update` once application code lands, so the graph covers real modules and not only documents.
+

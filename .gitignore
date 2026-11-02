@@ -6,6 +6,9 @@
 .obsidian/hotkeys.json
 .trash/
 
+# Generated knowledge graph (machine-specific paths and caches)
+graphify-out/
+
 # Credentials and local settings
 .env
 .env.*

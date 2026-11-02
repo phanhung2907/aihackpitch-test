@@ -16,6 +16,10 @@ The repository root is the Obsidian vault (`Open folder as vault`). Shared setti
 
 [Ten shortlisted UI templates](../plans/ui-templates-shortlist.md) are recorded for the AI HackPitch session on 2026-11-04, ranked by fit with the fixed React + Vite + Tailwind + shadcn/ui stack in plan section 12. Star counts, licenses and last-push dates come from the GitHub API on 2026-11-03. Nothing has been installed, cloned or built; the note also flags that pre-built templates may conflict with contest rules on code written during the event.
 
+## Knowledge graph of the notes
+
+`graphify-out/` holds a generated knowledge graph of the 11 Markdown files in this repository: 73 nodes, 124 edges and 8 labelled communities, with `graph.html`, `graph.json` and `GRAPH_REPORT.md`. The folder is ignored by Git because it contains machine-specific interpreter paths and an extraction cache; regenerate it with the graphify skill rather than sharing it. The health check reported three collapsed undirected edges (duplicate endpoint pairs), so edge counts are approximate. Extraction was LLM-based, so the graph is a navigation aid, not an authoritative index of the plan.
+
 ## Verification
 
 Local verification passed: 10 document links resolve, required planning topics are present, and Git whitespace checks pass. The plan was reviewed for scope, dependencies, boundary cases and checkpoint consistency. Application tests/build and hosted CI are not applicable to this documentation-only step. Verify the final push from Git history when resuming.
