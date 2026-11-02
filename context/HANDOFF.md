@@ -20,6 +20,10 @@ The repository root is the Obsidian vault (`Open folder as vault`). Shared setti
 
 `graphify-out/` holds a generated knowledge graph of the 11 Markdown files in this repository: 73 nodes, 124 edges and 8 labelled communities, with `graph.html`, `graph.json` and `GRAPH_REPORT.md`. The folder is ignored by Git because it contains machine-specific interpreter paths and an extraction cache; regenerate it with the graphify skill rather than sharing it. The health check reported three collapsed undirected edges (duplicate endpoint pairs), so edge counts are approximate. Extraction was LLM-based, so the graph is a navigation aid, not an authoritative index of the plan.
 
+## Frontend UI base for the competition
+
+Branch `codex/frontend-base` carries a running UI shell in `frontend/`, based on satnaing/shadcn-admin (MIT, upstream commit `e16c87f`) and stripped to a feature-agnostic base: Clerk auth and the Tasks, Apps, Chats and Help Center samples are gone, the Users CRUD stays as a reference. Details, deliberate stack deviations and verification are in [the frontend readme](../frontend/README.md). `main` is untouched, so the banking checkpoint sequence still stands.
+
 ## Verification
 
 Local verification passed: 10 document links resolve, required planning topics are present, and Git whitespace checks pass. The plan was reviewed for scope, dependencies, boundary cases and checkpoint consistency. Application tests/build and hosted CI are not applicable to this documentation-only step. Verify the final push from Git history when resuming.

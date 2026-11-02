@@ -55,3 +55,12 @@
 - Cost for the run: 127,542 subagent tokens, with no input/output split reported by the host.
 - Next: rebuild with `graphify --update` once application code lands, so the graph covers real modules and not only documents.
 
+## 2026-11-03 — Frontend UI base on codex/frontend-base
+
+- Vendored satnaing/shadcn-admin (MIT, upstream `e16c87f`) into `frontend/`, keeping its LICENSE and original readme; installed with npm, so the pnpm lockfile was dropped.
+- Removed Clerk auth and the Tasks, Apps, Chats and Help Center samples; kept the Users CRUD as a reference; replaced the upstream author's demo identity with a neutral one.
+- Fixed the dashboard top-nav link that pointed at a non-existent `dashboard/overview` route, and repointed one search test from the removed `/tasks` route to `/users`.
+- Verified: `npm install`, `npm run build` and `npm run lint` pass; the dev server renders the trimmed dashboard. Unit tests were not run (browser-mode runner needs a Playwright Chromium download).
+- Deliberate deviations from plan section 12: TanStack Router instead of React Router, and no MSW while the template's local mock data suffices.
+- Next: on 2026-11-04, plan features from the brief, then reshape routes and content on this branch.
+
